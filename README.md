@@ -125,3 +125,7 @@ applies the perturbation, runs the agent loop (`list_files`, `read_file`, `write
 - Perturbations operate at the input (task) level, which is what API-only models expose.
   Representation-level attacks would need model internals; a latent-space probe on an
   open-weight coding model is a natural future extension, not implemented here.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
