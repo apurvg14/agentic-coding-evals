@@ -5,3 +5,4 @@ venv/
 .env
 results/
 .DS_Store
+AGENT-HANDOFF.md
