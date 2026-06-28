@@ -1,0 +1,7 @@
+{
+  "id": "fix-median",
+  "title": "Median of an even-length list",
+  "prompt": "stats.py has a function median(xs) that returns the median of a list of numbers. It is wrong for even-length lists: it should return the average of the two middle values, but it returns only one of them. Fix median(xs) while keeping odd-length behavior correct.",
+  "prompt_vague": "The median function has a bug. Fix it.",
+  "prompt_paraphrase": "In stats.py, median(xs) is supposed to return the median of a list of numbers. For lists with an even number of elements it misbehaves: rather than averaging the two central values it returns just one of them. Please fix median(xs) without breaking the odd-length case."
+}

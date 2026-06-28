@@ -1,0 +1,7 @@
+{
+  "id": "fix-fizzbuzz",
+  "title": "FizzBuzz ordering bug",
+  "prompt": "The function fizzbuzz(n) in fizzbuzz.py returns a list of FizzBuzz strings for 1..n. It is buggy: numbers divisible by both 3 and 5 should produce \"FizzBuzz\", but they currently do not. Fix fizzbuzz.py so the behavior is correct for all numbers.",
+  "prompt_vague": "Something's off with the fizzbuzz output. Fix it.",
+  "prompt_paraphrase": "In fizzbuzz.py, fizzbuzz(n) builds a list of FizzBuzz strings for the numbers 1 through n. There's a defect: a number that is a multiple of both 3 and 5 ought to yield \"FizzBuzz\", but right now it doesn't. Please correct fizzbuzz.py so every number is handled correctly."
+}

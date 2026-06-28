@@ -1,0 +1,6 @@
+# Core harness has NO required dependencies (runs on the stdlib + the built-in
+# `reference` agent). Install these only to evaluate real models:
+#   pip install anthropic   # for --model claude-*
+#   pip install openai      # for --model gpt-* / o*
+anthropic>=0.40.0
+openai>=1.40.0
