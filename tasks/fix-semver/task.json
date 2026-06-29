@@ -1,0 +1,7 @@
+{
+  "id": "fix-semver",
+  "title": "Fix version comparison ordering numbers as text",
+  "prompt": "semver.py has compare(a, b) for dotted version strings like '1.10.0'. It must return -1 if a < b, 0 if equal, and 1 if a > b, comparing each dotted component numerically. Right now it compares the strings lexicographically, so '1.10.0' is treated as less than '1.9.0'. Fix compare so each numeric component is compared as an integer (1.10.0 > 1.9.0, and 2.0.0 < 10.0.0).",
+  "prompt_vague": "compare() in semver.py sorts versions wrong. Fix it.",
+  "prompt_paraphrase": "The compare(a, b) function in semver.py should order dotted version strings by comparing each segment as a number, returning -1/0/1. Currently it does a plain string comparison, which makes '1.10.0' rank below '1.9.0'. Please correct it so component-wise numeric ordering is used."
+}

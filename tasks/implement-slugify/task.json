@@ -1,7 +1,7 @@
 {
   "id": "implement-slugify",
   "title": "Implement a slugify() helper",
-  "prompt": "textutil.py has a function slugify(text) that currently raises NotImplementedError. Implement it so that it: lowercases the text; replaces every run of non-alphanumeric characters (spaces, punctuation, underscores, slashes, etc.) with a single hyphen; and strips leading/trailing hyphens. For example 'Hello, World!' -> 'hello-world' and 'AI/ML & PM' -> 'ai-ml-pm'.",
+  "prompt": "textutil.py has a function slugify(text) that currently raises NotImplementedError. Implement it so that it: lowercases the text; replaces every run of non-alphanumeric characters (spaces, punctuation, underscores, slashes, etc.) with a single hyphen; and strips leading/trailing hyphens. For example 'Hello, World!' -> 'hello-world' and 'Node.js / React & Vue!' -> 'node-js-react-vue'.",
   "prompt_vague": "Make textutil.py work.",
-  "prompt_paraphrase": "In textutil.py, slugify(text) currently throws NotImplementedError. Please implement it: convert the text to lowercase, collapse each run of non-alphanumeric characters (spaces, punctuation, underscores, slashes, and so on) into a single hyphen, and remove any hyphens at the start or end. So 'Hello, World!' becomes 'hello-world' and 'AI/ML & PM' becomes 'ai-ml-pm'."
+  "prompt_paraphrase": "In textutil.py, slugify(text) currently throws NotImplementedError. Please implement it: convert the text to lowercase, collapse each run of non-alphanumeric characters (spaces, punctuation, underscores, slashes, and so on) into a single hyphen, and remove any hyphens at the start or end. So 'Hello, World!' becomes 'hello-world' and 'Node.js / React & Vue!' becomes 'node-js-react-vue'."
 }

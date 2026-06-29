@@ -1,0 +1,7 @@
+{
+  "id": "fix-lru-cache",
+  "title": "Fix LRU cache that evicts recently-used entries",
+  "prompt": "lru.py implements LRUCache(capacity) with get(key) and put(key, value). It should evict the least-recently-used entry when full, where both get() and put() count as 'using' a key. The bug: get() does not update recency, so the cache behaves like FIFO and can evict a key that was just read. Fix it so that reading or updating a key protects it from being the next eviction. get() on a missing key returns None.",
+  "prompt_vague": "The LRUCache in lru.py evicts the wrong entries. Fix it.",
+  "prompt_paraphrase": "LRUCache in lru.py is meant to drop the least-recently-used item once it exceeds capacity, and any access via get() or put() should refresh how recently a key was used. At the moment get() doesn't mark the key as used, so it acts like a FIFO queue. Make get() and put() both update recency; get() still returns None for an unknown key."
+}

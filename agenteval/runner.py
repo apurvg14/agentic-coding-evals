@@ -41,18 +41,65 @@ BRITTLE_WEAKNESSES = {
     "brittle-b": {"vague", "misleading_comment"},
 }
 
+# Image used by the containerized grader. Plain CPython, no third-party deps:
+# every task and grader is pure standard library by design.
+DOCKER_IMAGE = "python:3.11-slim"
 
-def _grade(task: Task, ws: Path) -> tuple[bool, str]:
-    grader = ws / "_grader_check.py"
-    shutil.copy2(task.check_path, grader)
+
+def _grade_docker(ws: Path) -> tuple[bool, str]:
+    """Run the grader inside a throwaway, network-less container.
+
+    This mirrors how SWE-bench grades each instance in an isolated image so the
+    result cannot be polluted by the host environment, and arbitrary model-written
+    code in the workspace cannot touch the network or the rest of the machine.
+    The grader file is already copied into `ws`, which is bind-mounted read-write.
+    """
+    host = str(ws.resolve()).replace("\\", "/")  # Docker Desktop accepts C:/... on Windows
+    cmd = ["docker", "run", "--rm",
+           "--network", "none", "--memory", "512m", "--cpus", "1",
+           "-v", f"{host}:/work", "-w", "/work",
+           DOCKER_IMAGE, "python", "_grader_check.py"]
     try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        return r.returncode == 0, (r.stdout + r.stderr)[-1500:]
+    except subprocess.TimeoutExpired:
+        return False, "docker grader timed out"
+    except FileNotFoundError:
+        return False, "docker not found on PATH (use --grader local)"
+
+
+def require_docker() -> None:
+    """Fail fast (before any grading) if --grader docker can't reach a daemon.
+
+    Without this, a stopped Docker daemon would make every grade return False and
+    masquerade as the model failing every task. An unreachable grader is an
+    infrastructure problem, not a model result, so we refuse to run instead.
+    """
+    try:
+        r = subprocess.run(["docker", "info"], capture_output=True, text=True, timeout=20)
+    except FileNotFoundError:
+        raise SystemExit("docker not found on PATH. Install Docker, or use --grader local.")
+    except subprocess.TimeoutExpired:
+        raise SystemExit("`docker info` timed out. Is the Docker daemon healthy? "
+                         "Start Docker Desktop, or use --grader local.")
+    if r.returncode != 0:
+        raise SystemExit("Cannot reach the Docker daemon (is Docker Desktop running?). "
+                         "Start it, or use --grader local.")
+
+
+def _grade(task: Task, ws: Path, grader: str = "local") -> tuple[bool, str]:
+    grader_file = ws / "_grader_check.py"
+    shutil.copy2(task.check_path, grader_file)
+    try:
+        if grader == "docker":
+            return _grade_docker(ws)
         r = subprocess.run([sys.executable, "_grader_check.py"], cwd=ws,
                            capture_output=True, text=True, timeout=30)
         return r.returncode == 0, (r.stdout + r.stderr)[-1500:]
     except subprocess.TimeoutExpired:
         return False, "grader timed out"
     finally:
-        grader.unlink(missing_ok=True)
+        grader_file.unlink(missing_ok=True)
 
 
 def _run_brittle(model: str, combo: list[str], task: Task, ws: Path) -> dict:
@@ -67,7 +114,8 @@ def _run_brittle(model: str, combo: list[str], task: Task, ws: Path) -> dict:
 
 
 def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
-                max_steps: int = 14, max_retries: int = 3) -> dict:
+                max_steps: int = 14, max_retries: int = 3,
+                grader: str = "local") -> dict:
     """Apply `combo`, run the agent, grade, persist a transcript, return a record.
 
     Distinguishes two kinds of non-pass, the way a real eval harness must:
@@ -116,7 +164,7 @@ def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
             status = "error"
             break
 
-    passed, grader_out = (None, "") if status == "error" else _grade(task, ws)
+    passed, grader_out = (None, "") if status == "error" else _grade(task, ws, grader)
     elapsed = round(time.time() - t0, 1)
 
     combo_key = "+".join(combo) if combo else "clean"
@@ -138,7 +186,8 @@ def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
 
 
 def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
-                     max_size: int, strategy: str, max_steps: int) -> list[dict]:
+                     max_size: int, strategy: str, max_steps: int,
+                     grader: str = "local") -> list[dict]:
     """Search semantics-preserving perturbations for ones that break the model.
 
     Sweeps every single atom (recording each outcome so we can attribute and
@@ -166,7 +215,7 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
         if evals >= budget:
             break
         print(f"    attack {task.id} [{model}] :: {a} ...", end="", flush=True)
-        r = run_variant(task, model, [a], out_dir, max_steps=max_steps)
+        r = run_variant(task, model, [a], out_dir, max_steps=max_steps, grader=grader)
         records.append(r)
         evals += 1
         out = _outcome(r)
@@ -182,7 +231,7 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
                 break
             print(f"    attack {task.id} [{model}] :: {'+'.join(c)} ...",
                   end="", flush=True)
-            r = run_variant(task, model, list(c), out_dir, max_steps=max_steps)
+            r = run_variant(task, model, list(c), out_dir, max_steps=max_steps, grader=grader)
             records.append(r)
             evals += 1
             out = _outcome(r)
@@ -195,7 +244,11 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
 
 def run_suite(suite_dir: Path, model: str, out_dir: Path,
               only: list[str] | None = None, max_steps: int = 14,
-              search: str = "greedy", budget: int = 24, max_size: int = 2) -> list[dict]:
+              search: str = "greedy", budget: int = 24, max_size: int = 2,
+              grader: str = "local") -> list[dict]:
+    if grader == "docker":
+        require_docker()
+
     tasks = discover_tasks(suite_dir, only=only)
     if not tasks:
         raise SystemExit(f"No tasks found in {suite_dir}")
@@ -203,7 +256,7 @@ def run_suite(suite_dir: Path, model: str, out_dir: Path,
     results: list[dict] = []
     for task in tasks:
         print(f"  [{model}] {task.id} :: clean ...", end="", flush=True)
-        clean = run_variant(task, model, [], out_dir, max_steps=max_steps)
+        clean = run_variant(task, model, [], out_dir, max_steps=max_steps, grader=grader)
         label = ("PASS" if clean["passed"] else
                  "ERROR" if clean["status"] == "error" else "fail")
         print(f" {label} ({clean['steps']} steps, {clean['seconds']}s)")
@@ -220,5 +273,5 @@ def run_suite(suite_dir: Path, model: str, out_dir: Path,
             continue
         results.extend(search_worstcase(task, model, out_dir, budget=budget,
                                         max_size=max_size, strategy=search,
-                                        max_steps=max_steps))
+                                        max_steps=max_steps, grader=grader))
     return results

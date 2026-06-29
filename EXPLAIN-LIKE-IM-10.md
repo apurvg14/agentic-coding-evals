@@ -22,13 +22,18 @@ Claude or Cursor), and the "broken LEGO" is broken computer code.
 ## The pieces (and what they're like)
 
 **1. The puzzles (we call them "tasks")**
-These are small pieces of broken code. We made three:
-- A "FizzBuzz" counting game that mixes up its words.
-- A "find the middle number" helper that gets the answer wrong when there's an even
-  amount of numbers.
-- A "make a clean web address" helper that isn't built yet at all.
+These are small pieces of broken code — but they're the *kind* of broken code real
+programmers fix every day, not made-up homework. We made twelve. Some have a tiny bug
+hidden in them, like:
+- a page counter that starts counting from the wrong spot,
+- something that thinks version "1.10" is *smaller* than "1.9" (it's actually bigger!),
+- a calendar helper that forgets February sometimes has 29 days.
 
-Each puzzle is like a broken toy waiting to be fixed.
+Others aren't built yet at all, and the robot has to build them — like a helper that
+turns "Hello, World!" into a clean web address ("hello-world"), or one that hides email
+addresses in a message so nobody's private info leaks.
+
+Each puzzle is like a broken (or unbuilt) toy waiting to be fixed.
 
 **2. The robot (we call it the "agent")**
 This is the AI. We give it a few "hands" so it can actually do things, not just talk:

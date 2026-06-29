@@ -1,0 +1,7 @@
+{
+  "id": "fix-csv-parse",
+  "title": "Fix CSV parser splitting inside quoted fields",
+  "prompt": "csvutil.py has parse_line(line) that splits a single CSV line into a list of fields. A field wrapped in double quotes may contain commas that are part of the value, not separators, and the surrounding quotes should be removed. Right now it just splits on every comma, so 'a,\"b,c\",d' wrongly becomes four fields. Fix parse_line so quoted commas are preserved: 'a,\"b,c\",d' -> ['a', 'b,c', 'd'].",
+  "prompt_vague": "parse_line in csvutil.py breaks on quoted fields. Fix it.",
+  "prompt_paraphrase": "In csvutil.py, parse_line(line) should break a CSV line into fields while treating commas inside double-quoted sections as literal characters and stripping the wrapping quotes. Currently it naively splits on commas. Repair it so 'a,\"b,c\",d' yields ['a', 'b,c', 'd']."
+}

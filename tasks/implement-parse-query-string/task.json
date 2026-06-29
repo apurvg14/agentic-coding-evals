@@ -1,0 +1,7 @@
+{
+  "id": "implement-parse-query-string",
+  "title": "Implement a URL query-string parser",
+  "prompt": "querystring.py has parse_qs(s) that currently raises NotImplementedError. Implement it to parse a URL query string into a dict. Split on '&'; each pair splits on the first '=' into key and value. A key seen once maps to its single string value; a key seen multiple times maps to a list of its values in order. A pair with no '=' maps the key to an empty string. An empty input returns an empty dict. For example parse_qs('a=1&a=2&b=3') -> {'a': ['1', '2'], 'b': '3'}.",
+  "prompt_vague": "Make parse_qs in querystring.py work.",
+  "prompt_paraphrase": "Implement parse_qs(s) in querystring.py (currently raising NotImplementedError) so it turns a query string into a dictionary: break the string on '&', then split each piece on the first '=' to get a key and value. Single-occurrence keys store a plain string; keys that repeat collect their values into an ordered list; a piece lacking '=' gives the key an empty-string value; and an empty string returns {}. For instance parse_qs('a=1&a=2&b=3') becomes {'a': ['1', '2'], 'b': '3'}."
+}

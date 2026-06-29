@@ -1,0 +1,7 @@
+{
+  "id": "implement-deep-merge",
+  "title": "Implement a recursive deep_merge() for dicts",
+  "prompt": "dictutil.py has deep_merge(a, b) that currently raises NotImplementedError. Implement it so it returns a NEW dict that deep-merges b into a: when both a and b have a dict at the same key, merge those nested dicts recursively; otherwise the value from b wins (including when b replaces a dict with a scalar). Neither input dict may be mutated. For example deep_merge({'a': {'b': 1}}, {'a': {'c': 2}}) -> {'a': {'b': 1, 'c': 2}}.",
+  "prompt_vague": "Make deep_merge in dictutil.py work.",
+  "prompt_paraphrase": "Implement deep_merge(a, b) in dictutil.py (it currently throws NotImplementedError). It should produce a brand-new dictionary combining b into a: recursively merge sub-dictionaries that share a key, and otherwise let b's value take precedence, even if that means a scalar replacing a nested dict. Do not modify either argument. So deep_merge({'a': {'b': 1}}, {'a': {'c': 2}}) returns {'a': {'b': 1, 'c': 2}}."
+}

@@ -49,6 +49,26 @@ Repo-level (instruction untouched, behavior preserved):
 The worst-case search sweeps every atom, then escalates to size-2 combinations only if
 the model survived all singles (FGSM → PGD).
 
+## Dashboard — no code required
+
+Prefer point-and-click over the CLI? Launch the local web dashboard:
+
+```bash
+cd agentic-coding-evals
+python -m agenteval dashboard          # opens http://127.0.0.1:8765 in your browser
+```
+
+From the browser you can pick a model, select which tasks to run, tune the
+worst-case search (strategy, budget, stacking depth, agent steps) and grader
+(local or Docker), launch a run, watch live progress stream in, and read the
+rendered scorecard — capability vs. worst-case robustness, failure-class
+attribution, the transfer matrix, and per-task detail. Click any task to inspect
+its prompt, starting code, reference solution, and hidden grader.
+
+It's pure standard library (no web framework, no build step) and just shells out
+to the same `run` command, so the dashboard and CLI always agree. For real models,
+put an API key in `.env` and it's picked up automatically.
+
 ## Quickstart — full demo, no API key needed
 
 Three keyless backends let you see the *entire* attack + transfer pipeline work:
@@ -88,6 +108,7 @@ Outputs:
 --max-size N                  max atoms stacked when escalating (default: 2)
 --tasks id1,id2               run a subset of tasks
 --max-steps N                 agent step budget per run (default: 14)
+--grader local|docker         grade in-process or in an isolated container (default: local)
 ```
 
 ## How it works
@@ -99,6 +120,19 @@ tasks/<id>/
   solution/     reference fix (used by `reference` agent + as oracle)
   check.py      functional grader (SWE-bench style): FAIL_TO_PASS + PASS_TO_PASS
 ```
+
+### The task suite (12 tasks)
+Small, self-contained versions of everyday engineering work — each is a single
+standard-library Python module with a crisp, testable spec, so grading is unambiguous.
+
+**Bug-fix** (localize and fix a planted defect, like a GitHub issue): off-by-one in
+pagination offsets · version comparison ordering numbers as text (`1.10` vs `1.9`) ·
+CSV parser breaking on quoted commas · an LRU cache that evicts recently-used entries ·
+a token-bucket limiter that overfills after idle time · date arithmetic ignoring leap
+years · binary search returning a non-leftmost match.
+
+**Implement-from-spec** (build a function to a ticket): `slugify` · recursive `deep_merge`
+for dicts · Luhn checksum validation · URL query-string parsing · email redaction.
 
 For each task: run it clean (is it solvable at all?), then — for clean-solved tasks —
 run the worst-case perturbation search. Each variant copies `workspace/` to a temp dir,
@@ -116,6 +150,12 @@ The tests *are* the spec; we never grade the model's prose. This is why an
 under-specified (`vague`) run can still legitimately fail: the fixed test suite defines
 correctness regardless of how the prompt is phrased.
 
+With `--grader docker`, each grade runs inside a throwaway `python:3.11-slim` container
+(`--network none`, with memory/CPU limits), the way SWE-bench isolates every instance, so
+the result can't be polluted by the host and model-written code can't touch the network.
+`--grader local` (default) runs the grader in a subprocess with a timeout — fine for these
+trusted tasks and dependency-free to run.
+
 ### Infrastructure errors are excluded, never counted as attacks
 A run that raises a transient API error (connection drop, rate limit, timeout, 5xx) is
 retried with backoff; if it still fails it is recorded with `status="error"` and
@@ -132,18 +172,46 @@ harnesses, SWE-bench included, must separate infra flakiness from genuine failur
 - **Toward real SWE-bench:** swap synthetic tasks for git-checkout repos + a test command;
   the runner/grader contract stays the same.
 
-## Honest limitations (v0.1)
+## Related work
 
-- Grading runs the agent's code locally with a timeout, not in a container — fine for
-  these trusted tasks; sandbox before pointing it at untrusted repos. (SWE-bench runs
-  each instance in a per-task Docker image; that's the natural next step here.)
-- Three hand-built tasks: enough to demonstrate the method and read transcripts, not to
-  rank models statistically. Scale task count for real signal.
+This is a compact, from-scratch implementation of an **established and active research
+direction**, not a novel benchmark — robustness of code models to semantics-preserving
+changes has been studied directly:
+
+- **ReCode** (Wang et al., ACL 2023) — the closest predecessor: 30+ semantics-preserving
+  perturbations (docstrings, names, syntax, formatting) over HumanEval/MBPP, graded by
+  execution, with a **worst-case "Robust Pass@k"**. The prompt/repo atoms and the
+  worst-case framing here are a small, agentic subset of that idea.
+- **ReliabilityBench** (2026) — evaluates agents along the same three axes used here:
+  repeated-run consistency, **robustness to task perturbations**, and **fault tolerance
+  under infrastructure failures** (timeouts, rate limits) — the latter being exactly the
+  infra-error exclusion this harness implements.
+- **EvaLooop** (2025) — perturbation robustness of coding LLMs; reports the same
+  "which model is more robust depends on the perturbation" effect that motivates the
+  per-perturbation attribution and transfer table here.
+- **SWE-ABS / SWE-bench-A2A** (2026) — show that weak test suites overstate SWE-bench
+  scores and apply mutation / semantics-preserving perturbations and cross-provider
+  robustness checks; motivation for the functional FAIL_TO_PASS/PASS_TO_PASS grading.
+- **SWE-bench** (Jimenez et al., 2023) — the execution-based, container-isolated grading
+  contract this harness mirrors.
+
+The contribution of this repo is **pedagogical and infrastructural**: a small, readable,
+end-to-end agentic harness (tool-use loop + worst-case search + transfer analysis +
+infra-aware functional grading) you can run and extend in minutes — not a new dataset or
+a state-of-the-art claim.
+
+## Honest limitations
+
+- Twelve small, self-contained tasks: enough to demonstrate the method and read
+  transcripts, not to rank models with statistical confidence. Scale task count (and add
+  real git-checkout repos) for production-grade signal.
 - `pass@1` only (no pass@k yet). The search is a small combinatorial sweep, not a learned
   attacker.
 - Perturbations operate at the input (task) level, which is what API-only models expose.
   Representation-level attacks would need model internals; a latent-space probe on an
   open-weight coding model is a natural future extension, not implemented here.
+- Container grading (`--grader docker`) requires a running Docker daemon; the default
+  local grader keeps the project dependency-free to run.
 
 ## License
 

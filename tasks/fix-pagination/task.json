@@ -1,0 +1,7 @@
+{
+  "id": "fix-pagination",
+  "title": "Fix the off-by-one in page_offset()",
+  "prompt": "paginate.py converts a 1-indexed page number into the zero-based offset of the first item on that page, via page_offset(page, per_page). It is returning the wrong offset (page 1 should start at offset 0, not 10). Fix page_offset so that page 1 -> 0, page 2 with per_page 10 -> 10, and page 3 with per_page 25 -> 50. Do not change total_pages.",
+  "prompt_vague": "page_offset in paginate.py returns the wrong number. Fix it.",
+  "prompt_paraphrase": "In paginate.py, page_offset(page, per_page) is supposed to return the zero-based index of the first record on a 1-indexed page, but it's off. Correct it so the first page starts at offset 0, the second page (size 10) at 10, and the third page (size 25) at 50, leaving total_pages alone."
+}

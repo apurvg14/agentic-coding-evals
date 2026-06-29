@@ -1,0 +1,7 @@
+{
+  "id": "implement-luhn",
+  "title": "Implement Luhn checksum validation",
+  "prompt": "luhn.py has is_valid(number) that currently raises NotImplementedError. Implement the Luhn checksum: given a string of digits, walk from right to left; double every second digit (the 2nd, 4th, ... from the right) and subtract 9 from any result greater than 9; sum all the digits; return True if the total is divisible by 10, otherwise False. For example is_valid('79927398713') is True.",
+  "prompt_vague": "Make is_valid in luhn.py work.",
+  "prompt_paraphrase": "Implement is_valid(number) in luhn.py (it raises NotImplementedError today) using the Luhn algorithm: scanning the digit string from the right, double every second digit and reduce any value above 9 by 9, add everything up, and report True when the sum is a multiple of 10. So is_valid('79927398713') should be True and is_valid('79927398710') should be False."
+}

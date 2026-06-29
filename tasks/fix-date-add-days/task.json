@@ -1,0 +1,7 @@
+{
+  "id": "fix-date-add-days",
+  "title": "Fix date arithmetic ignoring leap years",
+  "prompt": "datemath.py has add_days(year, month, day, n) that returns the date n days later as a (year, month, day) tuple, handling month and year rollover. The bug is in its days-per-month helper: February is always treated as 28 days, so leap years are wrong (e.g. 2024-02-28 + 1 day should be 2024-02-29, not 2024-03-01). Fix the leap-year logic. A year is a leap year if it is divisible by 4, except centuries, which must be divisible by 400.",
+  "prompt_vague": "add_days in datemath.py is wrong around February. Fix it.",
+  "prompt_paraphrase": "In datemath.py, add_days(year, month, day, n) advances a date by n days with proper month/year carry, but its month-length helper hard-codes February at 28 days, breaking leap years (2024-02-28 plus one day should land on 2024-02-29). Implement correct leap-year handling: divisible by 4, but centuries only count when divisible by 400."
+}

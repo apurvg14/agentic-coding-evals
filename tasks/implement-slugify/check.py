@@ -20,7 +20,7 @@ FAIL_TO_PASS = {
     "collapse_spaces":        lambda: slugify("  Multiple   spaces ") == "multiple-spaces",
     "already_a_slug":         lambda: slugify("already-slug") == "already-slug",
     "underscores_to_hyphen":  lambda: slugify("Under_scores_too") == "under-scores-too",
-    "slash_and_amp":          lambda: slugify("AI/ML & PM") == "ai-ml-pm",
+    "mixed_punctuation":      lambda: slugify("Node.js / React & Vue!") == "node-js-react-vue",
 }
 
 PASS_TO_PASS = {}

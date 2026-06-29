@@ -1,0 +1,7 @@
+{
+  "id": "fix-rate-limiter",
+  "title": "Fix token bucket that overfills after idle time",
+  "prompt": "ratelimit.py implements a TokenBucket(capacity, refill_rate) with allow(now). It refills tokens based on elapsed time and consumes one per allowed request. The bug: the refill is not capped at capacity, so after a long idle period the bucket accumulates far more tokens than capacity and lets a big burst through. Fix allow() so the token count never exceeds capacity, while still refilling correctly over time.",
+  "prompt_vague": "The TokenBucket in ratelimit.py lets too many requests through. Fix it.",
+  "prompt_paraphrase": "TokenBucket(capacity, refill_rate) in ratelimit.py tops up tokens according to elapsed time and spends one per allowed call, but it forgets to clamp the total at capacity, so a long idle gap lets a burst much larger than capacity succeed. Cap the refill at capacity while keeping the time-based refill behavior."
+}

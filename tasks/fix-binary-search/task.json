@@ -1,0 +1,7 @@
+{
+  "id": "fix-binary-search",
+  "title": "Fix binary search returning a non-leftmost match",
+  "prompt": "search.py has first_index(xs, target) which should return the index of the FIRST (leftmost) occurrence of target in the sorted list xs, or -1 if it is absent. The current binary search returns whichever matching index it lands on, so for [1, 2, 2, 2, 3] and target 2 it can return 2 or 3 instead of 1. Fix it to always return the leftmost matching index, while still returning -1 when the target is not present.",
+  "prompt_vague": "first_index in search.py returns the wrong index for duplicates. Fix it.",
+  "prompt_paraphrase": "In search.py, first_index(xs, target) is supposed to find the leftmost position of target in a sorted list (or -1 if missing), but with repeated values it returns an arbitrary matching index rather than the first. Adjust the binary search so it consistently reports the smallest index whose value equals target."
+}

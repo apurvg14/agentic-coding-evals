@@ -143,6 +143,75 @@ def build_report(results: list[dict]) -> str:
     return "\n".join(L)
 
 
+def summarize(results: list[dict]) -> dict:
+    """Structured version of the scorecard, for programmatic consumers (the
+    dashboard). Same numbers as build_report(), as JSON-friendly dicts."""
+    models, clean, tasks_of, single_fail, any_fail, errors, titles = _index(results)
+
+    model_rows = []
+    for m in models:
+        tasks = sorted(tasks_of[m])
+        n = len(tasks)
+        solved = [t for t in tasks if clean.get((m, t))]
+        broken = [t for t in solved if any_fail.get((m, t))]
+        survived = [t for t in solved if not any_fail.get((m, t))]
+        model_rows.append({
+            "model": m,
+            "clean_pass": round(100 * len(solved) / n, 1) if n else 0.0,
+            "robust_pass": round(100 * len(survived) / n, 1) if n else 0.0,
+            "asr": round(100 * len(broken) / len(solved), 1) if solved else 0.0,
+            "solved": len(solved), "n": n, "errors": errors.get(m, 0),
+        })
+
+    failure_classes = []
+    for atom in ATOMS:
+        counts = {}
+        for m in models:
+            solved = [t for t in tasks_of[m] if clean.get((m, t))]
+            counts[m] = sum(1 for t in solved if atom in single_fail.get((m, t), set()))
+        failure_classes.append({"atom": atom, "counts": counts})
+
+    attack_models = [m for m in models
+                     if any(single_fail.get((m, t)) for t in tasks_of[m])]
+    matrix = {}
+    for s in attack_models:
+        matrix[s] = {}
+        for t_m in attack_models:
+            if s == t_m:
+                matrix[s][t_m] = None
+                continue
+            pairs = hits = 0
+            shared = [t for t in tasks_of[s]
+                      if clean.get((s, t)) and clean.get((t_m, t))]
+            for t in shared:
+                for atom in single_fail.get((s, t), set()):
+                    pairs += 1
+                    if atom in single_fail.get((t_m, t), set()):
+                        hits += 1
+            matrix[s][t_m] = {"hits": hits, "pairs": pairs,
+                              "rate": round(100 * hits / pairs, 1) if pairs else None}
+
+    all_tasks = sorted({t for m in models for t in tasks_of[m]})
+    per_task = []
+    for t in all_tasks:
+        row = {"task": t, "title": titles.get(t, t), "models": {}}
+        for m in models:
+            if t in tasks_of[m]:
+                row["models"][m] = {
+                    "clean": bool(clean.get((m, t))),
+                    "broken_by": sorted(single_fail.get((m, t), set())),
+                }
+        per_task.append(row)
+
+    return {
+        "models": model_rows,
+        "failure_classes": failure_classes,
+        "transfer": {"models": attack_models, "matrix": matrix},
+        "per_task": per_task,
+        "atoms": list(ATOMS),
+    }
+
+
 def render(results_path: Path, out_path: Path) -> None:
     results = json.loads(Path(results_path).read_text(encoding="utf-8"))
     Path(out_path).write_text(build_report(results), encoding="utf-8")

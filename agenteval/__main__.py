@@ -41,11 +41,19 @@ def main() -> None:
                    help="max perturbation evaluations per task (default: 24)")
     r.add_argument("--max-size", type=int, default=2,
                    help="max perturbations stacked when escalating (default: 2)")
+    r.add_argument("--grader", choices=["local", "docker"], default="local",
+                   help="grade in a local subprocess or an isolated Docker "
+                        "container (SWE-bench style). Default: local")
     r.add_argument("--no-report", action="store_true")
 
     rp = sub.add_parser("report", help="render the scorecard from results.json")
     rp.add_argument("--results", type=Path, default=DEFAULT_OUT / "results.json")
     rp.add_argument("--out", type=Path, default=DEFAULT_OUT / "report.md")
+
+    dh = sub.add_parser("dashboard",
+                        help="launch the local web dashboard (no coding required)")
+    dh.add_argument("--port", type=int, default=8765)
+    dh.add_argument("--no-open", action="store_true", help="don't auto-open the browser")
 
     args = ap.parse_args()
 
@@ -53,10 +61,12 @@ def main() -> None:
         only = [t.strip() for t in args.tasks.split(",")] if args.tasks else None
         args.out.mkdir(parents=True, exist_ok=True)
         print(f"Running suite '{args.suite.name}' | model '{args.model}' | "
-              f"search={args.search} budget={args.budget} max_size={args.max_size}")
+              f"search={args.search} budget={args.budget} max_size={args.max_size} "
+              f"grader={args.grader}")
         results = runner.run_suite(args.suite, args.model, args.out, only=only,
                                    max_steps=args.max_steps, search=args.search,
-                                   budget=args.budget, max_size=args.max_size)
+                                   budget=args.budget, max_size=args.max_size,
+                                   grader=args.grader)
 
         results_path = args.out / "results.json"
         existing = []
@@ -75,6 +85,10 @@ def main() -> None:
     elif args.cmd == "report":
         report.render(args.results, args.out)
         print(f"Scorecard -> {args.out}")
+
+    elif args.cmd == "dashboard":
+        from . import dashboard
+        dashboard.serve(port=args.port, open_browser=not args.no_open)
 
 
 if __name__ == "__main__":

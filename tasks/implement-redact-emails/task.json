@@ -1,0 +1,7 @@
+{
+  "id": "implement-redact-emails",
+  "title": "Implement email redaction in free text",
+  "prompt": "redact.py has redact(text) that currently raises NotImplementedError. Implement it so it replaces every email address in the text with the literal string '[redacted]', leaving all other text unchanged. An email is a local part of letters, digits, and the characters . _ % + -, then '@', then a domain of letters, digits, dots, and hyphens, ending in a dot and a TLD of at least two letters. For example redact('contact me at john@example.com please') -> 'contact me at [redacted] please'.",
+  "prompt_vague": "Make redact in redact.py work.",
+  "prompt_paraphrase": "Implement redact(text) in redact.py (it raises NotImplementedError now) to swap out any email address with the literal '[redacted]' while leaving the rest of the text intact. Treat an email as a local part (letters, digits, and . _ % + -) followed by '@', then a domain of letters/digits/dots/hyphens ending in a dot and a two-or-more-letter TLD. So redact('contact me at john@example.com please') yields 'contact me at [redacted] please'."
+}
