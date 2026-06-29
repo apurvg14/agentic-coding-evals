@@ -67,8 +67,17 @@ def _run_brittle(model: str, combo: list[str], task: Task, ws: Path) -> dict:
 
 
 def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
-                max_steps: int = 14) -> dict:
-    """Apply `combo`, run the agent, grade, persist a transcript, return a record."""
+                max_steps: int = 14, max_retries: int = 3) -> dict:
+    """Apply `combo`, run the agent, grade, persist a transcript, return a record.
+
+    Distinguishes two kinds of non-pass, the way a real eval harness must:
+      status="ok"     the agent loop completed; `passed` is the genuine result
+                      of functional grading (this is a real model outcome).
+      status="error"  the agent run raised (API connection / rate-limit / timeout
+                      / config). Retried up to `max_retries` with backoff; if it
+                      still fails it is recorded but EXCLUDED from the scorecard
+                      and is NEVER counted as a successful attack.
+    """
     work = Path(tempfile.mkdtemp(prefix=f"{task.id}_"))
     ws = work / "repo"
     shutil.copytree(task.workspace_dir, ws)
@@ -79,18 +88,35 @@ def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
 
     t0 = time.time()
     error = ""
-    try:
-        if model == "reference":
-            result = agent.run_reference(task.solution_dir, ws)
-        elif model in BRITTLE_WEAKNESSES:
-            result = _run_brittle(model, combo, task, ws)
-        else:
-            result = agent.run_llm_agent(model, full_prompt, ws, max_steps=max_steps)
-    except Exception as e:
-        result = {"steps": 0, "transcript": [{"fatal": f"{type(e).__name__}: {e}"}]}
-        error = f"{type(e).__name__}: {e}"
+    result = {"steps": 0, "transcript": []}
+    status = "ok"
+    for attempt in range(1, max_retries + 2):
+        # fresh workspace each attempt (a partial run may have edited it)
+        if attempt > 1:
+            shutil.rmtree(ws, ignore_errors=True)
+            shutil.copytree(task.workspace_dir, ws)
+            perturb.apply_combo(combo, task, ws, task.prompt)
+        try:
+            if model == "reference":
+                result = agent.run_reference(task.solution_dir, ws)
+            elif model in BRITTLE_WEAKNESSES:
+                result = _run_brittle(model, combo, task, ws)
+            else:
+                result = agent.run_llm_agent(model, full_prompt, ws, max_steps=max_steps)
+            status, error = "ok", ""
+            break
+        except Exception as e:  # noqa: BLE001 - we classify below
+            error = f"{type(e).__name__}: {e}"
+            result = {"steps": 0, "transcript": [{"fatal": error}]}
+            transient = agent.is_transient_error(e)
+            if transient and attempt <= max_retries:
+                time.sleep(min(2 ** attempt, 20))
+                continue
+            # any uncaught agent-run exception means no genuine attempt happened
+            status = "error"
+            break
 
-    passed, grader_out = _grade(task, ws)
+    passed, grader_out = (None, "") if status == "error" else _grade(task, ws)
     elapsed = round(time.time() - t0, 1)
 
     combo_key = "+".join(combo) if combo else "clean"
@@ -99,14 +125,15 @@ def run_variant(task: Task, model: str, combo: list[str], out_dir: Path,
     tpath = tdir / f"{model.replace('/', '-')}__{task.id}__{combo_key}.json"
     tpath.write_text(json.dumps(
         {"task": task.id, "model": model, "combo": combo, "note": note,
-         "passed": passed, "grader_out": grader_out,
-         "transcript": result["transcript"]}, indent=2), encoding="utf-8")
+         "status": status, "passed": passed, "error": error,
+         "grader_out": grader_out, "transcript": result["transcript"]},
+        indent=2), encoding="utf-8")
 
     shutil.rmtree(work, ignore_errors=True)
     return {"task": task.id, "title": task.title, "model": model,
             "phase": "clean" if not combo else "search",
             "combo": combo, "note": note, "passed": passed,
-            "steps": result.get("steps", 0), "seconds": elapsed,
+            "status": status, "steps": result.get("steps", 0), "seconds": elapsed,
             "error": error, "transcript": str(tpath)}
 
 
@@ -127,6 +154,13 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
     if strategy == "random":
         random.shuffle(atoms)
 
+    def _outcome(r: dict) -> str:
+        # A break requires a genuine (status ok) run that failed grading.
+        # Errored runs are infra noise: neither a break nor a clean survival.
+        if r["status"] == "error":
+            return "errored"
+        return "broke" if not r["passed"] else "survived"
+
     any_single_break = False
     for a in atoms:
         if evals >= budget:
@@ -135,9 +169,9 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
         r = run_variant(task, model, [a], out_dir, max_steps=max_steps)
         records.append(r)
         evals += 1
-        broke = not r["passed"]
-        any_single_break = any_single_break or broke
-        print(" BROKE" if broke else " survived")
+        out = _outcome(r)
+        any_single_break = any_single_break or (out == "broke")
+        print(f" {out.upper()}")
 
     if not any_single_break and max_size >= 2:
         combos = list(itertools.combinations(perturb.ATOMS, 2))
@@ -151,10 +185,10 @@ def search_worstcase(task: Task, model: str, out_dir: Path, budget: int,
             r = run_variant(task, model, list(c), out_dir, max_steps=max_steps)
             records.append(r)
             evals += 1
-            if not r["passed"]:
-                print(" BROKE")
+            out = _outcome(r)
+            print(f" {out.upper()}")
+            if out == "broke":
                 break
-            print(" survived")
 
     return records
 
@@ -170,10 +204,15 @@ def run_suite(suite_dir: Path, model: str, out_dir: Path,
     for task in tasks:
         print(f"  [{model}] {task.id} :: clean ...", end="", flush=True)
         clean = run_variant(task, model, [], out_dir, max_steps=max_steps)
-        print(" PASS" if clean["passed"] else " fail",
-              f"({clean['steps']} steps, {clean['seconds']}s)")
+        label = ("PASS" if clean["passed"] else
+                 "ERROR" if clean["status"] == "error" else "fail")
+        print(f" {label} ({clean['steps']} steps, {clean['seconds']}s)")
         results.append(clean)
 
+        if clean["status"] == "error":
+            print(f"    (skipping attacks: clean run errored for {task.id} -- "
+                  "cannot assess robustness)")
+            continue
         if not clean["passed"]:
             print(f"    (skipping attacks: model cannot solve {task.id} clean)")
             continue

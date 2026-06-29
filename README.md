@@ -97,13 +97,31 @@ tasks/<id>/
   task.json     id, title, prompt, prompt_vague, prompt_paraphrase
   workspace/    starting buggy/incomplete code (copied to a temp dir per run)
   solution/     reference fix (used by `reference` agent + as oracle)
-  check.py      deterministic grader: runs in the solved repo, exit 0 = pass
+  check.py      functional grader (SWE-bench style): FAIL_TO_PASS + PASS_TO_PASS
 ```
 
 For each task: run it clean (is it solvable at all?), then — for clean-solved tasks —
 run the worst-case perturbation search. Each variant copies `workspace/` to a temp dir,
 applies the perturbation, runs the agent loop (`list_files`, `read_file`, `write_file`,
 `run_python`, `submit`), and grades with `check.py`. The grader is never shown to the agent.
+
+### Grading is functional, like SWE-bench (not string matching)
+A task is **resolved** iff the agent's edits make the hidden test suite pass — exactly
+the SWE-bench contract:
+- **FAIL_TO_PASS** — tests that fail on the buggy workspace and must pass after the fix
+  (they prove the bug was actually fixed / the feature implemented).
+- **PASS_TO_PASS** — tests that already pass and must stay passing (regression guard).
+
+The tests *are* the spec; we never grade the model's prose. This is why an
+under-specified (`vague`) run can still legitimately fail: the fixed test suite defines
+correctness regardless of how the prompt is phrased.
+
+### Infrastructure errors are excluded, never counted as attacks
+A run that raises a transient API error (connection drop, rate limit, timeout, 5xx) is
+retried with backoff; if it still fails it is recorded with `status="error"` and
+**excluded from every metric** — it is never counted as a successful attack. The
+scorecard's "excluded (infra)" column reports how many were dropped. (Real eval
+harnesses, SWE-bench included, must separate infra flakiness from genuine failures.)
 
 ## Extending it
 
@@ -117,7 +135,8 @@ applies the perturbation, runs the agent loop (`list_files`, `read_file`, `write
 ## Honest limitations (v0.1)
 
 - Grading runs the agent's code locally with a timeout, not in a container — fine for
-  these trusted tasks; sandbox before pointing it at untrusted repos.
+  these trusted tasks; sandbox before pointing it at untrusted repos. (SWE-bench runs
+  each instance in a per-task Docker image; that's the natural next step here.)
 - Three hand-built tasks: enough to demonstrate the method and read transcripts, not to
   rank models statistically. Scale task count for real signal.
 - `pass@1` only (no pass@k yet). The search is a small combinatorial sweep, not a learned

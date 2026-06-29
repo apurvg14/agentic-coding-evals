@@ -20,6 +20,34 @@ from pathlib import Path
 
 MAX_OUTPUT = 6000
 
+# How many times the provider SDK retries transient HTTP failures internally.
+SDK_MAX_RETRIES = 5
+
+# Exception *type names* that mean "the infrastructure failed", not "the model
+# was wrong". Runs that fail this way are retried and, if still failing, marked
+# `error` and EXCLUDED from the scorecard -- they are never counted as a passed
+# attack. (Mirrors how SWE-bench harness runs distinguish infra errors from
+# genuinely unresolved instances.)
+_TRANSIENT_NAMES = {
+    "APIConnectionError", "APITimeoutError", "RateLimitError",
+    "InternalServerError", "OverloadedError", "ServiceUnavailableError",
+    "APIError",  # base; refined by status_code below
+}
+
+
+def is_transient_error(exc: BaseException) -> bool:
+    """True if `exc` looks like a transient infrastructure/networking failure."""
+    if type(exc).__name__ in _TRANSIENT_NAMES:
+        # If a concrete HTTP status is attached, only 429/5xx are transient.
+        code = getattr(exc, "status_code", None)
+        if code is None:
+            return True
+        return code == 429 or code >= 500
+    code = getattr(exc, "status_code", None)
+    if code is not None and (code == 429 or code >= 500):
+        return True
+    return False
+
 SYSTEM = (
     "You are a coding agent working inside a code repository. "
     "Use the tools to inspect files, make minimal correct edits, and verify your work. "
@@ -100,7 +128,7 @@ def run_llm_agent(model: str, prompt: str, ws: Path, max_steps: int = 14,
 def _run_anthropic(model: str, prompt: str, ws: Path, max_steps: int) -> dict:
     import anthropic
 
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(max_retries=SDK_MAX_RETRIES)
     tools = [{"name": t["name"], "description": t["description"], "input_schema": t["schema"]}
              for t in TOOLS]
     messages = [{"role": "user", "content": prompt}]
@@ -135,7 +163,7 @@ def _run_anthropic(model: str, prompt: str, ws: Path, max_steps: int) -> dict:
 def _run_openai(model: str, prompt: str, ws: Path, max_steps: int) -> dict:
     from openai import OpenAI
 
-    client = OpenAI()
+    client = OpenAI(max_retries=SDK_MAX_RETRIES)
     tools = [{"type": "function",
               "function": {"name": t["name"], "description": t["description"],
                            "parameters": t["schema"]}} for t in TOOLS]

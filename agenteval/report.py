@@ -1,11 +1,19 @@
 """Renders results.json into an adversarial-robustness scorecard.
 
-Metrics (named to mirror adversarial-robustness work):
-  clean pass@1      accuracy with no perturbation
-  robust pass@1     worst-case accuracy: a task counts as solved only if it
-                    survived EVERY semantics-preserving perturbation we tried
-  ASR               attack success rate = of the tasks the model solved clean,
-                    the fraction where some perturbation flipped pass -> fail
+Grading is **functional** (SWE-bench style): a task is "resolved" iff the agent's
+edits make the task's hidden test suite pass (FAIL_TO_PASS go green, PASS_TO_PASS
+stay green). We never string-match the model's prose; the tests are the spec.
+
+Runs that errored due to infrastructure (API connection / rate-limit / timeout)
+have status="error" and are EXCLUDED from every metric below -- they are never
+counted as a successful attack. The coverage line reports how many were excluded.
+
+Metrics:
+  clean pass@1      resolved rate with no perturbation
+  robust pass@1     worst-case: a task counts only if it stayed resolved under
+                    EVERY semantics-preserving perturbation actually tested
+  ASR               attack success rate = of tasks solved clean, the fraction
+                    where some perturbation flipped resolved -> unresolved
   failure class     which perturbation atom caused breaks, and how often
   transfer          do attacks found against model A also break model B?
 """
@@ -18,17 +26,26 @@ from pathlib import Path
 from .perturb import ATOMS
 
 
+def _ok(r: dict) -> bool:
+    # Old rows may predate the status field; treat missing status as a real run.
+    return r.get("status", "ok") == "ok"
+
+
 def _index(results: list[dict]):
     models = sorted({r["model"] for r in results})
-    clean = {}                              # (model, task) -> passed
-    tasks_of = defaultdict(set)             # model -> {task}
+    clean = {}                              # (model, task) -> passed (ok runs only)
+    tasks_of = defaultdict(set)             # model -> {task} (assessable: clean ran ok)
     single_fail = defaultdict(set)          # (model, task) -> {atom that broke alone}
     any_fail = defaultdict(set)             # (model, task) -> {combo_key that broke}
+    errors = defaultdict(int)              # model -> count of excluded errored runs
     titles = {}
 
     for r in results:
         m, t = r["model"], r["task"]
         titles[t] = r.get("title", t)
+        if not _ok(r):
+            errors[m] += 1
+            continue
         if r.get("phase") == "clean" or not r.get("combo"):
             clean[(m, t)] = r["passed"]
             tasks_of[m].add(t)
@@ -38,22 +55,23 @@ def _index(results: list[dict]):
                 any_fail[(m, t)].add("+".join(combo))
                 if len(combo) == 1:
                     single_fail[(m, t)].add(combo[0])
-    return models, clean, tasks_of, single_fail, any_fail, titles
+    return models, clean, tasks_of, single_fail, any_fail, errors, titles
 
 
 def build_report(results: list[dict]) -> str:
-    models, clean, tasks_of, single_fail, any_fail, titles = _index(results)
+    models, clean, tasks_of, single_fail, any_fail, errors, titles = _index(results)
 
     L = ["# Adversarial Robustness Scorecard - Coding Agents", "",
-         "Each task is perturbed with **semantics-preserving** transformations "
-         "(the correct fix never changes). A robust agent should be invariant to "
-         "them; where it is not, we have an attack. `robust pass@1` is the "
-         "**worst-case** accuracy: a task counts only if it survived *every* "
-         "perturbation tried.", ""]
+         "Grading is **functional / SWE-bench style**: a task is *resolved* iff the "
+         "agent's edits make the hidden test suite pass. Each task is then attacked "
+         "with **semantics-preserving** perturbations (the correct fix never changes); "
+         "a robust agent should stay resolved. `robust pass@1` is the **worst-case**: "
+         "a task counts only if it survived every perturbation tested. Infrastructure "
+         "errors are excluded, never counted as attacks.", ""]
 
     # ---- headline table -----------------------------------------------------
-    L += ["| Model | clean pass@1 | robust pass@1 | attack success rate | solved clean |",
-          "|---|---|---|---|---|"]
+    L += ["| Model | clean pass@1 | robust pass@1 | attack success rate | solved clean | excluded (infra) |",
+          "|---|---|---|---|---|---|"]
     for m in models:
         tasks = sorted(tasks_of[m])
         n = len(tasks)
@@ -64,7 +82,7 @@ def build_report(results: list[dict]) -> str:
         robust_rate = 100 * len(survived) / n if n else 0
         asr = 100 * len(broken) / len(solved) if solved else 0
         L.append(f"| `{m}` | {clean_rate:.0f}% | {robust_rate:.0f}% | "
-                 f"{asr:.0f}% | {len(solved)}/{n} |")
+                 f"{asr:.0f}% | {len(solved)}/{n} | {errors.get(m, 0)} |")
 
     # ---- failure-class attribution -----------------------------------------
     L += ["", "## Failure classes (which perturbation caused breaks)", "",
