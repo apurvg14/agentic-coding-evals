@@ -100,6 +100,9 @@ Outputs:
 - `results/results.json` — raw per-(task, perturbation) outcomes (models accumulate here)
 - `results/transcripts/` — full step-by-step agent logs (where "model taste" lives)
 
+For a step-by-step, full-suite walkthrough (dashboard and CLI, reading results,
+Docker grading, cost/time), see **[RUNNING.md](RUNNING.md)**.
+
 ## Run controls
 
 ```
