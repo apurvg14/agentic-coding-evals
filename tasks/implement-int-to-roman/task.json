@@ -1,0 +1,7 @@
+{
+  "id": "implement-int-to-roman",
+  "title": "Implement integer-to-Roman-numeral conversion",
+  "prompt": "roman.py has a function to_roman(n) that currently raises NotImplementedError. Implement it so it converts an integer between 1 and 3999 (inclusive) into its Roman numeral string using standard subtractive notation. The symbols are I=1, V=5, X=10, L=50, C=100, D=500, M=1000, and the subtractive pairs IV=4, IX=9, XL=40, XC=90, CD=400, CM=900 must be used (so 4 is 'IV', not 'IIII'). For example to_roman(4) -> 'IV', to_roman(9) -> 'IX', to_roman(58) -> 'LVIII', and to_roman(1994) -> 'MCMXCIV'.",
+  "prompt_vague": "Make to_roman in roman.py work.",
+  "prompt_paraphrase": "Implement to_roman(n) in roman.py (it raises NotImplementedError right now) to turn an integer from 1 to 3999 into a Roman numeral, using the usual symbols (I, V, X, L, C, D, M) and the subtractive forms IV, IX, XL, XC, CD, CM where they apply, so that 4 renders as 'IV' rather than 'IIII'. For instance to_roman(4) is 'IV', to_roman(9) is 'IX', to_roman(58) is 'LVIII', and to_roman(1994) is 'MCMXCIV'."
+}

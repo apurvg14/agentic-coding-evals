@@ -1,0 +1,7 @@
+{
+  "id": "fix-merge-intervals",
+  "title": "Fix merge_intervals() overlap handling",
+  "prompt": "intervals.py has merge_intervals(intervals) which should take a list of [start, end] pairs and return a new list of non-overlapping intervals, sorted by start, where any intervals that overlap OR merely touch are combined. It is buggy: it assumes the input is already sorted by start, and it treats touching intervals (like [1, 2] and [2, 3]) as separate instead of merging them. Fix it so that the input order does not matter and touching intervals merge. For example merge_intervals([[1, 2], [2, 3]]) -> [[1, 3]] and merge_intervals([[3, 5], [1, 4]]) -> [[1, 5]].",
+  "prompt_vague": "merge_intervals in intervals.py returns the wrong result on some inputs. Fix it.",
+  "prompt_paraphrase": "In intervals.py, merge_intervals(intervals) is supposed to accept a list of [start, end] pairs (in any order) and return them merged into a sorted list of non-overlapping intervals, where intervals that overlap or just touch end-to-end are joined. Right now it wrongly assumes the input is pre-sorted and leaves touching intervals separate. Correct it so that ordering is irrelevant and adjacent intervals merge, e.g. [[1, 2], [2, 3]] -> [[1, 3]] and [[3, 5], [1, 4]] -> [[1, 5]]."
+}

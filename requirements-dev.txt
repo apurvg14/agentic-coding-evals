@@ -1,0 +1,5 @@
+# Dev/test-only dependencies (the harness itself needs none of these).
+#   pip install -r requirements-dev.txt
+#   playwright install chromium      # one-time browser download for E2E tests
+pytest>=8.0
+playwright>=1.49

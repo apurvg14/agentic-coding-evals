@@ -31,7 +31,9 @@ from .tasks import discover_tasks
 
 ROOT = Path(__file__).resolve().parent.parent
 SUITE = ROOT / "tasks"
-OUT = ROOT / "results"
+# Results dir is overridable so tests (and CI) can point at a throwaway location
+# instead of the developer's real results/.
+OUT = Path(os.environ.get("AGENTEVAL_RESULTS_DIR") or (ROOT / "results"))
 HTML = Path(__file__).resolve().parent / "dashboard.html"
 
 PRESET_MODELS = ["reference", "brittle-a", "brittle-b"]
@@ -244,14 +246,17 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"error": "not found"}, 404)
 
 
-def serve(port: int = 8765, open_browser: bool = True) -> None:
+def serve(host: str = "127.0.0.1", port: int = 8765, open_browser: bool = True) -> None:
     load_dotenv()
     OUT.mkdir(parents=True, exist_ok=True)
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    url = f"http://127.0.0.1:{port}/"
-    print(f"agenteval dashboard -> {url}")
+    httpd = ThreadingHTTPServer((host, port), Handler)
+    # When bound to all interfaces (e.g. inside Docker) there's no local browser
+    # to open and "0.0.0.0" isn't a navigable URL, so point users at localhost.
+    display_host = "localhost" if host in ("0.0.0.0", "::") else host
+    url = f"http://{display_host}:{port}/"
+    print(f"agenteval dashboard -> {url}  (bound to {host}:{port})")
     print("Pick a model, choose tasks, hit Run. Ctrl+C to stop the server.")
-    if open_browser:
+    if open_browser and host not in ("0.0.0.0", "::"):
         threading.Timer(0.6, lambda: webbrowser.open(url)).start()
     try:
         httpd.serve_forever()

@@ -1,0 +1,21 @@
+# Keep the build context small and never ship secrets or local state.
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.pyc
+.DS_Store
+
+# Secrets & local-only files (API key is passed at runtime via --env-file).
+.env
+AGENT-HANDOFF.md
+
+# Local results are mounted as a volume at runtime, not baked into the image.
+results
+
+# Dev / test tooling not needed to run the dashboard image.
+tests
+requirements-dev.txt
+.pytest_cache
+node_modules

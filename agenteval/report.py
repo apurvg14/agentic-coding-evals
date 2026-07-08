@@ -58,16 +58,19 @@ def _index(results: list[dict]):
     return models, clean, tasks_of, single_fail, any_fail, errors, titles
 
 
-def build_report(results: list[dict]) -> str:
+def build_report(results: list[dict], atoms: list[str] | None = None,
+                 title: str = "Coding Agents", intro: str | None = None) -> str:
+    atoms = list(atoms) if atoms is not None else list(ATOMS)
     models, clean, tasks_of, single_fail, any_fail, errors, titles = _index(results)
 
-    L = ["# Adversarial Robustness Scorecard - Coding Agents", "",
-         "Grading is **functional / SWE-bench style**: a task is *resolved* iff the "
-         "agent's edits make the hidden test suite pass. Each task is then attacked "
-         "with **semantics-preserving** perturbations (the correct fix never changes); "
-         "a robust agent should stay resolved. `robust pass@1` is the **worst-case**: "
-         "a task counts only if it survived every perturbation tested. Infrastructure "
-         "errors are excluded, never counted as attacks.", ""]
+    if intro is None:
+        intro = ("Grading is **functional / SWE-bench style**: a task is *resolved* iff the "
+                 "agent's edits make the hidden test suite pass. Each task is then attacked "
+                 "with **semantics-preserving** perturbations (the correct fix never changes); "
+                 "a robust agent should stay resolved. `robust pass@1` is the **worst-case**: "
+                 "a task counts only if it survived every perturbation tested. Infrastructure "
+                 "errors are excluded, never counted as attacks.")
+    L = [f"# Adversarial Robustness Scorecard - {title}", "", intro, ""]
 
     # ---- headline table -----------------------------------------------------
     L += ["| Model | clean pass@1 | robust pass@1 | attack success rate | solved clean | excluded (infra) |",
@@ -89,7 +92,7 @@ def build_report(results: list[dict]) -> str:
           "Counts of *clean-solved* tasks broken by each single perturbation, per model.", "",
           "| Perturbation | " + " | ".join(f"`{m}`" for m in models) + " |",
           "|" + "---|" * (len(models) + 1)]
-    for atom in ATOMS:
+    for atom in atoms:
         cells = []
         for m in models:
             solved = [t for t in tasks_of[m] if clean.get((m, t))]
@@ -143,9 +146,10 @@ def build_report(results: list[dict]) -> str:
     return "\n".join(L)
 
 
-def summarize(results: list[dict]) -> dict:
+def summarize(results: list[dict], atoms: list[str] | None = None) -> dict:
     """Structured version of the scorecard, for programmatic consumers (the
     dashboard). Same numbers as build_report(), as JSON-friendly dicts."""
+    atoms = list(atoms) if atoms is not None else list(ATOMS)
     models, clean, tasks_of, single_fail, any_fail, errors, titles = _index(results)
 
     model_rows = []
@@ -164,7 +168,7 @@ def summarize(results: list[dict]) -> dict:
         })
 
     failure_classes = []
-    for atom in ATOMS:
+    for atom in atoms:
         counts = {}
         for m in models:
             solved = [t for t in tasks_of[m] if clean.get((m, t))]
@@ -208,10 +212,12 @@ def summarize(results: list[dict]) -> dict:
         "failure_classes": failure_classes,
         "transfer": {"models": attack_models, "matrix": matrix},
         "per_task": per_task,
-        "atoms": list(ATOMS),
+        "atoms": list(atoms),
     }
 
 
-def render(results_path: Path, out_path: Path) -> None:
+def render(results_path: Path, out_path: Path, atoms: list[str] | None = None,
+           title: str = "Coding Agents", intro: str | None = None) -> None:
     results = json.loads(Path(results_path).read_text(encoding="utf-8"))
-    Path(out_path).write_text(build_report(results), encoding="utf-8")
+    Path(out_path).write_text(
+        build_report(results, atoms=atoms, title=title, intro=intro), encoding="utf-8")

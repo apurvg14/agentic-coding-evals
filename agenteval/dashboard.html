@@ -6,151 +6,149 @@
 <title>agentic-coding-evals · dashboard</title>
 <style>
   :root {
-    --bg: #0b0e14; --panel: #11151d; --panel2: #161b25; --inset: #0a0d12;
-    --border: #232a36; --border2: #2e3744;
-    --text: #e6edf3; --muted: #93a1b1; --faint: #5f6b7a;
-    --accent: #4c8dff; --accent-dim: #1d2c45;
-    --success: #3fb950; --danger: #f0563f; --warning: #d6a019;
+    --bg: #0c0f16; --panel: #12161f; --panel2: #171c27; --inset: #0a0d13;
+    --border: #222a37; --border2: #2d3644;
+    --text: #e8eef5; --muted: #96a3b4; --faint: #616d7c;
+    --accent: #5b93ff; --accent-hi: #74a4ff; --ink: #06101f;
+    --good: #46b95a; --bad: #f0563f; --warn: #d8a521;
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --radius: 12px;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans);
          font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
   a { color: var(--accent); text-decoration: none; }
-  h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
-  h3 { font-size: 11px; margin: 0 0 10px; font-weight: 600; color: var(--muted);
+  h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  h2 { font-size: 15px; font-weight: 640; letter-spacing: -.01em; margin: 0; }
+  h3 { font-size: 11px; margin: 0 0 12px; font-weight: 600; color: var(--muted);
        text-transform: uppercase; letter-spacing: .07em; }
-  .h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 
-  header { display: flex; align-items: center; gap: 12px; padding: 13px 22px;
+  header { display: flex; align-items: center; gap: 11px; padding: 13px 20px;
            border-bottom: 1px solid var(--border); position: sticky; top: 0;
-           background: rgba(11,14,20,.86); backdrop-filter: blur(8px); z-index: 8; }
+           background: rgba(12,15,22,.88); backdrop-filter: blur(8px); z-index: 8; }
   header .dot { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); }
   header .sub { color: var(--muted); font-size: 12.5px; }
   header .grow { flex: 1; }
   header .tag { font-size: 11.5px; color: var(--faint); font-family: var(--mono); }
 
-  .layout { display: grid; grid-template-columns: 312px 1fr; align-items: start; }
-  .sidebar { border-right: 1px solid var(--border); padding: 18px 18px 40px;
-             position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto; }
-  .main { padding: 22px 26px 60px; min-width: 0; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 20px 72px; }
+  .stack { display: flex; flex-direction: column; gap: 20px; }
 
-  .grouplabel { font-size: 11px; color: var(--faint); text-transform: uppercase;
-                letter-spacing: .07em; margin: 4px 0 12px; }
-  .field { margin-bottom: 15px; }
-  label.lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .card > .cardhead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .card > .cardhead .grow { flex: 1; }
+
+  label.lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
   select, input[type=number], input[type=text] {
     width: 100%; background: var(--panel2); color: var(--text); border: 1px solid var(--border2);
-    border-radius: 7px; padding: 8px 10px; font-size: 13px; font-family: var(--sans); }
+    border-radius: 8px; padding: 9px 11px; font-size: 13px; font-family: var(--sans); }
   input:focus, select:focus { outline: none; border-color: var(--accent); }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-  button { font-family: var(--sans); font-size: 13px; border-radius: 7px; cursor: pointer;
+  button { font-family: var(--sans); font-size: 13px; border-radius: 8px; cursor: pointer;
            border: 1px solid var(--border2); background: var(--panel2); color: var(--text);
-           padding: 9px 13px; transition: border-color .15s, background .15s, opacity .15s; }
+           padding: 10px 15px; transition: border-color .15s, background .15s, opacity .15s; }
   button:hover { border-color: var(--faint); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #06101f;
-                   font-weight: 650; }
-  button.primary:hover { background: #5e98ff; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--ink); font-weight: 650; }
+  button.primary:hover { background: var(--accent-hi); }
   button:disabled { opacity: .45; cursor: not-allowed; }
   button.ghost { background: transparent; }
-  button.danger { color: var(--danger); }
+  button.danger { color: var(--bad); }
   .linkbtn { background: none; border: none; color: var(--accent); padding: 0; font-size: 12px; cursor: pointer; }
   .linkbtn:hover { text-decoration: underline; }
 
-  .tasktools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .tasklist { border: 1px solid var(--border); border-radius: 8px; max-height: 252px;
-              overflow-y: auto; background: var(--panel); }
-  .taskitem { display: flex; align-items: center; gap: 9px; padding: 7px 10px;
-              border-bottom: 1px solid var(--border); }
+  .tasktools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .tasklist { border: 1px solid var(--border); border-radius: 10px; max-height: 240px; overflow-y: auto; background: var(--inset); }
+  .taskitem { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
   .taskitem:last-child { border-bottom: none; }
   .taskitem:hover { background: var(--panel2); }
   .taskitem input { width: auto; }
-  .taskitem .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
-                    white-space: nowrap; cursor: pointer; font-family: var(--mono); font-size: 12px; }
+  .taskitem .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                    cursor: pointer; font-family: var(--mono); font-size: 12px; }
   .taskitem .name:hover { color: var(--accent); }
   .taskitem .insp { color: var(--faint); font-size: 11px; cursor: pointer; opacity: 0; }
   .taskitem:hover .insp { opacity: 1; }
 
+  details.adv { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 4px; }
+  details.adv > summary { list-style: none; cursor: pointer; color: var(--muted); font-size: 12.5px;
+                          padding: 10px 0; display: flex; align-items: center; gap: 8px; user-select: none; }
+  details.adv > summary::-webkit-details-marker { display: none; }
+  details.adv > summary .chev { transition: transform .15s; color: var(--faint); }
+  details.adv[open] > summary .chev { transform: rotate(90deg); }
+  details.adv .advbody { padding: 6px 0 10px; }
+
+  .actions { display: flex; gap: 10px; align-items: center; margin-top: 20px; }
   .muted { color: var(--muted); } .faint { color: var(--faint); }
-  .caption { font-size: 11.5px; color: var(--faint); margin-top: 9px; line-height: 1.5; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 9px;
+  .caption { font-size: 11.5px; color: var(--faint); margin-top: 10px; line-height: 1.5; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--panel2); padding: 1px 6px; border-radius: 5px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 10px;
           border-radius: 999px; border: 1px solid var(--border2); color: var(--muted); }
   .pill .pdot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .pill.live { color: var(--accent); border-color: var(--accent); }
   .pill.live .pdot { animation: pulse 1.1s infinite; }
-  .pill.ok { color: var(--success); border-color: #1f3a26; }
-  .pill.err { color: var(--danger); border-color: #45261f; }
+  .pill.ok { color: var(--good); border-color: #1f3a26; }
+  .pill.err { color: var(--bad); border-color: #45261f; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
 
   .logwrap { background: var(--inset); border: 1px solid var(--border); border-radius: 10px;
-             height: 250px; overflow: auto; padding: 12px 14px; }
+             height: 230px; overflow: auto; padding: 12px 14px; }
   .logline { font-family: var(--mono); font-size: 12px; line-height: 1.6; white-space: pre-wrap;
-             word-break: break-word; color: #c9d4e0; }
-  .logline.l-good { color: #6fd585; } .logline.l-bad { color: #ff7a66; }
-  .logline.l-dim { color: var(--faint); }
+             word-break: break-word; color: #cbd6e2; }
+  .logline.l-good { color: #74d98a; } .logline.l-bad { color: #ff7a66; } .logline.l-dim { color: var(--faint); }
   .logempty { font-family: var(--mono); font-size: 12px; color: var(--faint); }
 
-  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
-  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
-  .stat .v { font-size: 24px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-  .stat .k { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--inset); border: 1px solid var(--border); border-radius: 10px; padding: 15px 16px; }
+  .stat .v { font-size: 25px; font-weight: 660; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat .k { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
 
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-          padding: 16px 18px; margin-bottom: 16px; }
+  .subcard { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; background: var(--inset); }
+  .subcard:last-child { margin-bottom: 0; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  thead th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase;
-             letter-spacing: .04em; }
+  thead th { color: var(--muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   tbody tr:hover { background: var(--panel2); }
   tbody tr:last-child td { border-bottom: none; }
-  code { font-family: var(--mono); font-size: 12px; background: var(--panel2);
-         padding: 1px 6px; border-radius: 5px; }
 
   .bars { display: flex; flex-direction: column; gap: 14px; }
-  .barwrap { display: grid; grid-template-columns: 150px 1fr 92px; gap: 14px; align-items: center; }
-  .barlabel { font-size: 12.5px; font-family: var(--mono); color: var(--text);
-              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .barpair { display: flex; flex-direction: column; gap: 5px; position: relative;
-             border-left: 1px solid var(--border2); padding-left: 0; }
+  .barwrap { display: grid; grid-template-columns: 160px 1fr 96px; gap: 14px; align-items: center; }
+  .barlabel { font-size: 12.5px; font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barpair { display: flex; flex-direction: column; gap: 5px; border-left: 1px solid var(--border2); }
   .bar { height: 12px; border-radius: 3px; min-width: 2px; transition: width .35s ease; }
-  .bar.clean { background: #34405a; }
-  .bar.robust { background: var(--accent); }
+  .bar.clean { background: #37425c; } .bar.robust { background: var(--accent); }
   .barnum { font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; color: var(--muted); }
   .legend { display: flex; gap: 18px; font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-  .legend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px;
-                margin-right: 6px; vertical-align: -1px; }
-  .empty { color: var(--faint); font-size: 13px; padding: 14px 0; }
+  .legend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .empty { color: var(--faint); font-size: 13px; padding: 16px 0; }
   .dash { color: var(--faint); }
-  .g-good { color: var(--success); } .g-bad { color: var(--danger); } .g-warn { color: var(--warning); }
+  .g-good { color: var(--good); } .g-bad { color: var(--bad); } .g-warn { color: var(--warn); }
 
-  .overlay { position: fixed; inset: 0; background: rgba(3,6,11,.74); display: none;
+  .overlay { position: fixed; inset: 0; background: rgba(3,6,11,.76); display: none;
              align-items: flex-start; justify-content: center; padding: 44px 16px; z-index: 30; }
   .overlay.open { display: flex; }
-  .modal { background: var(--panel); border: 1px solid var(--border2); border-radius: 12px;
-           width: min(840px, 100%); max-height: 86vh; overflow: auto; padding: 22px 24px; }
+  .modal { background: var(--panel); border: 1px solid var(--border2); border-radius: 14px;
+           width: min(840px, 100%); max-height: 86vh; overflow: auto; padding: 24px; }
   .modal .close { float: right; }
   .filebox { border: 1px solid var(--border); border-radius: 8px; margin: 8px 0 14px; overflow: hidden; }
-  .filebox .fname { background: var(--panel2); padding: 6px 11px; font-family: var(--mono);
-                    font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); }
-  .filebox pre { margin: 0; padding: 11px 13px; font-family: var(--mono); font-size: 12px;
-                 overflow: auto; white-space: pre; color: #c9d4e0; background: var(--inset); }
-  .promptbox { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px;
-               padding: 10px 12px; font-size: 12.5px; margin: 4px 0 14px; white-space: pre-wrap; }
-  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-           background: var(--panel); border: 1px solid var(--border2); color: var(--text);
-           padding: 9px 16px; border-radius: 8px; font-size: 13px; z-index: 40; display: none; }
+  .filebox .fname { background: var(--panel2); padding: 6px 11px; font-family: var(--mono); font-size: 12px;
+                    color: var(--muted); border-bottom: 1px solid var(--border); }
+  .filebox pre { margin: 0; padding: 11px 13px; font-family: var(--mono); font-size: 12px; overflow: auto;
+                 white-space: pre; color: #cbd6e2; background: var(--inset); }
+  .promptbox { background: var(--inset); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px;
+               font-size: 12.5px; margin: 4px 0 14px; white-space: pre-wrap; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--panel);
+           border: 1px solid var(--border2); color: var(--text); padding: 10px 16px; border-radius: 9px;
+           font-size: 13px; z-index: 40; display: none; }
   .toast.show { display: block; }
 
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-    .summary { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 720px) { .summary { grid-template-columns: 1fr; } .barwrap { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -159,99 +157,113 @@
   <h1>agentic-coding-evals</h1>
   <span class="sub">adversarial-robustness dashboard</span>
   <span class="grow"></span>
-  <span class="tag" id="suiteTag"></span>
+  <span class="tag" id="suiteTag" data-testid="suite-tag"></span>
 </header>
 
-<div class="layout">
-  <aside class="sidebar">
-    <div class="grouplabel">Experiment</div>
+<div class="wrap">
+  <div class="stack">
 
-    <div class="field">
-      <label class="lbl" for="model">Model</label>
-      <select id="model"></select>
-      <input type="text" id="customModel" placeholder="e.g. claude-haiku-4-5-20251001"
-             style="display:none; margin-top:8px;" />
-      <div id="keyNote" class="caption"></div>
-    </div>
-
-    <div class="row2">
-      <div class="field">
-        <label class="lbl" for="search">Search</label>
-        <select id="search">
-          <option value="greedy">greedy</option>
-          <option value="random">random</option>
-          <option value="none">none (clean only)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label class="lbl" for="grader">Grader</label>
-        <select id="grader">
-          <option value="local">local</option>
-          <option value="docker">docker</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row3">
-      <div class="field">
-        <label class="lbl" for="budget">Budget</label>
-        <input type="number" id="budget" min="1" max="200" value="24" />
-      </div>
-      <div class="field">
-        <label class="lbl" for="maxsize">Stack</label>
-        <input type="number" id="maxsize" min="1" max="4" value="2" />
-      </div>
-      <div class="field">
-        <label class="lbl" for="maxsteps">Steps</label>
-        <input type="number" id="maxsteps" min="1" max="60" value="14" />
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="tasktools">
-        <label class="lbl" style="margin:0;">Tasks <span id="taskCount" class="faint"></span></label>
-        <span>
-          <button class="linkbtn" id="selAll">all</button>
-          <span class="faint">·</span>
-          <button class="linkbtn" id="selNone">none</button>
-        </span>
-      </div>
-      <div class="tasklist" id="tasklist"></div>
-    </div>
-
-    <div class="field" style="display:flex; gap:9px; align-items:center; margin-top:18px;">
-      <button class="primary" id="runBtn" style="flex:1;">Run experiment</button>
-      <button class="ghost danger" id="stopBtn" disabled>Stop</button>
-    </div>
-    <div id="runStatus" class="caption"></div>
-  </aside>
-
-  <main class="main">
-    <section style="margin-bottom:22px;">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-        <span class="h2">Run log</span>
-        <span id="logPill" class="pill">idle</span>
-      </div>
-      <div class="logwrap" id="logwrap">
-        <div class="logempty" id="logEmpty">No run yet — configure an experiment and press Run.</div>
-      </div>
-    </section>
-
-    <section>
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
-        <span class="h2">Scorecard</span>
-        <button class="linkbtn" id="refreshBtn">refresh</button>
-        <button class="linkbtn" id="clearBtn">clear results</button>
+    <!-- ============ CONFIGURE & RUN ============ -->
+    <section class="card" data-testid="run-card">
+      <div class="cardhead">
+        <h2>Run an experiment</h2>
         <span class="grow"></span>
-        <span class="faint" style="font-size:12px;" id="resultsMeta"></span>
+        <span id="runPill" class="pill" data-testid="run-pill">idle</span>
       </div>
-      <div id="results"></div>
+
+      <div class="field">
+        <label class="lbl" for="model">Model</label>
+        <select id="model" data-testid="model-select"></select>
+        <input type="text" id="customModel" data-testid="custom-model-input"
+               placeholder="e.g. claude-haiku-4-5-20251001" style="display:none; margin-top:8px;" />
+        <div id="keyNote" class="caption" data-testid="key-note"></div>
+      </div>
+
+      <div class="field">
+        <div class="tasktools">
+          <label class="lbl" style="margin:0;">Tasks <span id="taskCount" class="faint"></span></label>
+          <span>
+            <button class="linkbtn" id="selAll" data-testid="select-all">select all</button>
+            <span class="faint">·</span>
+            <button class="linkbtn" id="selNone" data-testid="select-none">none</button>
+          </span>
+        </div>
+        <div class="tasklist" id="tasklist" data-testid="task-list"></div>
+      </div>
+
+      <details class="adv" data-testid="advanced">
+        <summary data-testid="advanced-toggle"><span class="chev">▸</span> Advanced settings</summary>
+        <div class="advbody">
+          <div class="row2">
+            <div class="field">
+              <label class="lbl" for="search">Perturbation search</label>
+              <select id="search" data-testid="search-select">
+                <option value="greedy">greedy (worst-case)</option>
+                <option value="random">random</option>
+                <option value="none">none (clean only)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl" for="grader">Grader</label>
+              <select id="grader" data-testid="grader-select">
+                <option value="local">local</option>
+                <option value="docker">docker</option>
+              </select>
+            </div>
+          </div>
+          <div class="row3">
+            <div class="field">
+              <label class="lbl" for="budget">Budget</label>
+              <input type="number" id="budget" data-testid="budget-input" min="1" max="200" value="24" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="maxsize">Stack depth</label>
+              <input type="number" id="maxsize" data-testid="maxsize-input" min="1" max="4" value="2" />
+            </div>
+            <div class="field">
+              <label class="lbl" for="maxsteps">Agent steps</label>
+              <input type="number" id="maxsteps" data-testid="maxsteps-input" min="1" max="60" value="14" />
+            </div>
+          </div>
+          <div class="caption">Budget caps perturbation evaluations per task. Stack depth is how many perturbations
+            may be combined. These default to sensible values — most users can leave them alone.</div>
+        </div>
+      </details>
+
+      <div class="actions">
+        <button class="primary" id="runBtn" data-testid="run-btn" style="flex:1;">Run experiment</button>
+        <button class="ghost danger" id="stopBtn" data-testid="stop-btn" disabled>Stop</button>
+      </div>
+      <div id="runStatus" class="caption" data-testid="run-status"></div>
     </section>
-  </main>
+
+    <!-- ============ RUN LOG ============ -->
+    <section class="card" data-testid="log-card">
+      <div class="cardhead">
+        <h2>Run log</h2>
+      </div>
+      <div class="logwrap" id="logwrap" data-testid="log">
+        <div class="logempty" id="logEmpty">No run yet — pick a model and tasks above, then press Run.</div>
+      </div>
+    </section>
+
+    <!-- ============ SCORECARD ============ -->
+    <section class="card" data-testid="scorecard">
+      <div class="cardhead">
+        <h2>Scorecard</h2>
+        <button class="linkbtn" id="refreshBtn" data-testid="refresh-btn">refresh</button>
+        <button class="linkbtn danger" id="clearBtn" data-testid="clear-btn">clear results</button>
+        <span class="grow"></span>
+        <span class="faint" style="font-size:12px;" id="resultsMeta" data-testid="results-meta"></span>
+      </div>
+      <div id="results" data-testid="results"></div>
+    </section>
+
+  </div>
 </div>
 
-<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
-<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay" data-testid="overlay"><div class="modal" id="modal" data-testid="modal"></div></div>
+<div class="toast" id="toast" data-testid="toast"></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -266,7 +278,6 @@ async function getJSON(url, opts){
   catch(e){ toast("Lost connection to the dashboard server."); throw e; }
 }
 
-// ---------- init ----------
 async function init(){
   META = await getJSON("/api/meta");
   $("suiteTag").textContent = META.tasks.length + " tasks · " + META.atoms.length + " perturbations";
@@ -283,7 +294,8 @@ async function init(){
   const tl=$("tasklist");
   META.tasks.forEach(t => {
     const row=document.createElement("div"); row.className="taskitem";
-    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=true; cb.value=t.id; cb.dataset.task="1";
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=true; cb.value=t.id;
+    cb.dataset.task="1"; cb.setAttribute("data-testid","task-cb-"+t.id);
     const nm=document.createElement("span"); nm.className="name"; nm.textContent=t.id; nm.title=t.title; nm.onclick=()=>openTask(t.id);
     const insp=document.createElement("span"); insp.className="insp"; insp.textContent="inspect"; insp.onclick=()=>openTask(t.id);
     row.appendChild(cb); row.appendChild(nm); row.appendChild(insp); tl.appendChild(row);
@@ -320,7 +332,6 @@ function updateKeyNote(){
 function setAll(v){ document.querySelectorAll('[data-task]').forEach(cb=>cb.checked=v); }
 function selectedTasks(){ return Array.from(document.querySelectorAll('[data-task]')).filter(cb=>cb.checked).map(cb=>cb.value); }
 
-// ---------- run ----------
 async function startRun(){
   const sel=$("model").value;
   const model = sel==="__custom__" ? $("customModel").value.trim() : sel;
@@ -348,7 +359,7 @@ async function clearResults(){
 
 function setRunning(on){
   $("runBtn").disabled=on; $("stopBtn").disabled=!on;
-  const p=$("logPill");
+  const p=$("runPill");
   p.className="pill"+(on?" live":""); p.innerHTML=(on?'<span class="pdot"></span>':'')+(on?"running":"idle");
 }
 
@@ -369,16 +380,16 @@ async function poll(){
   if (s.lines && s.lines.length){ appendLog(s.lines); since=s.total; }
   if (s.done && !s.active){
     const ok=s.returncode===0;
-    const p=$("logPill"); p.className="pill "+(ok?"ok":"err");
+    setRunning(false);  // resets the pill to idle first, then we set the terminal state
+    const p=$("runPill"); p.className="pill "+(ok?"ok":"err");
     p.innerHTML = ok ? "done · exit 0" : "exit "+s.returncode;
-    setRunning(false); $("runStatus").textContent = ok ? "Run complete." : "Run ended (exit "+s.returncode+").";
+    $("runStatus").textContent = ok ? "Run complete." : "Run ended (exit "+s.returncode+").";
     await loadResults();
     return;
   }
   pollTimer=setTimeout(poll, 600);
 }
 
-// ---------- results ----------
 async function loadResults(){ renderResults(await getJSON("/api/results")); }
 
 function robTone(v){ return v>=100?"g-good":v<=0?"g-bad":"g-warn"; }
@@ -387,12 +398,11 @@ function asrTone(v){ return v===0?"g-good":v>=50?"g-bad":"g-warn"; }
 function renderResults(d){
   const root=$("results");
   if(!d.models || !d.models.length){
-    root.innerHTML='<div class="empty">No results yet. Run an experiment to populate the scorecard.</div>';
+    root.innerHTML='<div class="empty" data-testid="results-empty">No results yet. Run an experiment to populate the scorecard.</div>';
     $("resultsMeta").textContent=""; return;
   }
   $("resultsMeta").textContent = d.models.length+" backend(s) · results/results.json";
 
-  // summary strip
   const real = d.models.filter(m=>m.model!=="reference");
   const bestRobust = (real.length?real:d.models).reduce((a,b)=>b.robust_pass>a.robust_pass?b:a);
   const taskN = d.per_task.length;
@@ -402,8 +412,7 @@ function renderResults(d){
     '<div class="stat"><div class="v '+robTone(bestRobust.robust_pass)+'">'+bestRobust.robust_pass+'%</div>' +
     '<div class="k">best robust pass@1 · <code>'+esc(bestRobust.model)+'</code></div></div></div>';
 
-  // headline table
-  html+='<div class="card"><h3>Headline</h3><table><thead><tr>' +
+  html+='<div class="subcard" data-testid="headline"><h3>Headline</h3><table><thead><tr>' +
     '<th>Backend</th><th class="num">clean pass@1</th><th class="num">robust pass@1</th>' +
     '<th class="num">attack success</th><th class="num">solved clean</th><th class="num">infra excl.</th>' +
     '</tr></thead><tbody>';
@@ -417,9 +426,8 @@ function renderResults(d){
   });
   html+='</tbody></table></div>';
 
-  // bars
-  html+='<div class="card"><h3>Capability vs. worst-case robustness</h3>' +
-    '<div class="legend"><span><span class="sw" style="background:#34405a"></span>clean pass@1</span>' +
+  html+='<div class="subcard"><h3>Capability vs. worst-case robustness</h3>' +
+    '<div class="legend"><span><span class="sw" style="background:#37425c"></span>clean pass@1</span>' +
     '<span><span class="sw" style="background:var(--accent)"></span>robust pass@1 (worst-case)</span></div><div class="bars">';
   d.models.forEach(m=>{
     html+='<div class="barwrap"><div class="barlabel" title="'+esc(m.model)+'">'+esc(m.model)+'</div>' +
@@ -431,10 +439,9 @@ function renderResults(d){
   html+='</div><div class="caption">The gap between the two bars is the attack success rate. ' +
     'robust pass@1 is worst-case: a task counts only if it survived every perturbation tested.</div></div>';
 
-  // failure classes
   const fc=d.failure_classes.filter(f=>d.models.some(m=>(f.counts[m.model]||0)>0));
   if(fc.length){
-    html+='<div class="card"><h3>Failure classes — tasks broken by each perturbation</h3><table><thead><tr><th>Perturbation</th>';
+    html+='<div class="subcard" data-testid="failure-classes"><h3>Failure classes — tasks broken by each perturbation</h3><table><thead><tr><th>Perturbation</th>';
     d.models.forEach(m=>html+='<th class="num"><code>'+esc(m.model)+'</code></th>');
     html+='</tr></thead><tbody>';
     fc.forEach(f=>{ html+='<tr><td><code>'+esc(f.atom)+'</code></td>';
@@ -444,10 +451,9 @@ function renderResults(d){
       'Perturbations that broke nothing (e.g. the <code>paraphrase</code> control) are omitted.</div></div>';
   }
 
-  // transfer
   const tm=d.transfer;
   if(tm.models && tm.models.length>=2){
-    html+='<div class="card"><h3>Attack transfer (source → target)</h3><table><thead><tr><th>source \\ target</th>';
+    html+='<div class="subcard" data-testid="transfer"><h3>Attack transfer (source → target)</h3><table><thead><tr><th>source \\ target</th>';
     tm.models.forEach(t=>html+='<th class="num"><code>'+esc(t)+'</code></th>');
     html+='</tr></thead><tbody>';
     tm.models.forEach(s=>{ html+='<tr><td><code>'+esc(s)+'</code></td>';
@@ -460,8 +466,7 @@ function renderResults(d){
       'the fraction that also break the target. High = shared blind spots.</div></div>';
   }
 
-  // per task
-  html+='<div class="card"><h3>Per-task detail</h3><table><thead><tr><th>Task</th>';
+  html+='<div class="subcard" data-testid="per-task"><h3>Per-task detail</h3><table><thead><tr><th>Task</th>';
   d.models.forEach(m=>html+='<th><code>'+esc(m.model)+'</code></th>');
   html+='</tr></thead><tbody>';
   d.per_task.forEach(row=>{
@@ -479,12 +484,11 @@ function renderResults(d){
   root.querySelectorAll('[data-task-open]').forEach(el=>el.onclick=()=>openTask(el.getAttribute('data-task-open')));
 }
 
-// ---------- task inspector ----------
 async function openTask(id){
   const t=await getJSON("/api/task?id="+encodeURIComponent(id));
   if(!t || t.error){ toast("Task not found."); return; }
-  let h='<button class="close linkbtn" onclick="closeModal()">close ✕</button>';
-  h+='<div class="h2" style="margin-bottom:3px;">'+esc(t.id)+'</div>';
+  let h='<button class="close linkbtn" onclick="closeModal()" data-testid="modal-close">close ✕</button>';
+  h+='<h2 style="margin-bottom:3px;">'+esc(t.id)+'</h2>';
   h+='<div class="muted" style="margin-bottom:16px;">'+esc(t.title)+'</div>';
   h+='<h3>Prompt</h3><div class="promptbox">'+esc(t.prompt)+'</div>';
   if(t.prompt_vague) h+='<h3>Vague variant — under-specified attack</h3><div class="promptbox">'+esc(t.prompt_vague)+'</div>';

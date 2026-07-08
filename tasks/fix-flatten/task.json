@@ -1,0 +1,7 @@
+{
+  "id": "fix-flatten",
+  "title": "Fix flatten() exploding strings",
+  "prompt": "flatten.py has flatten(items) which should recursively flatten arbitrarily nested lists and tuples into a single flat list, preserving left-to-right order. Strings must be treated as atomic values, NOT as containers to recurse into. The current implementation decides what to recurse into by calling iter() on each element, so strings get torn apart character by character (and actually recurse forever). Fix flatten so that lists and tuples are flattened but strings are kept intact. For example flatten(['ab', ['cd', 'ef']]) -> ['ab', 'cd', 'ef'] and flatten([1, [2, [3]]]) -> [1, 2, 3].",
+  "prompt_vague": "flatten() in flatten.py is broken on some inputs. Fix it.",
+  "prompt_paraphrase": "In flatten.py, flatten(items) should recursively collapse nested lists and tuples into one flat list while keeping their order, but it must treat strings as indivisible values rather than iterables. Today it tests each element with iter(), which causes strings to be split into characters (and recurse endlessly). Repair flatten so lists and tuples are flattened yet strings stay whole, e.g. flatten(['ab', ['cd', 'ef']]) -> ['ab', 'cd', 'ef'] and flatten([1, [2, [3]]]) -> [1, 2, 3]."
+}

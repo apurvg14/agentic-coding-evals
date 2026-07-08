@@ -6,3 +6,7 @@ venv/
 results/
 .DS_Store
 AGENT-HANDOFF.md
+
+# Fetched public math datasets (not redistributed; pull with `fetch-math`).
+data/math/
+.pytest_cache/

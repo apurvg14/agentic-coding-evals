@@ -124,7 +124,7 @@ tasks/<id>/
   check.py      functional grader (SWE-bench style): FAIL_TO_PASS + PASS_TO_PASS
 ```
 
-### The task suite (12 tasks)
+### The task suite (16 tasks)
 Small, self-contained versions of everyday engineering work — each is a single
 standard-library Python module with a crisp, testable spec, so grading is unambiguous.
 
@@ -132,10 +132,12 @@ standard-library Python module with a crisp, testable spec, so grading is unambi
 pagination offsets · version comparison ordering numbers as text (`1.10` vs `1.9`) ·
 CSV parser breaking on quoted commas · an LRU cache that evicts recently-used entries ·
 a token-bucket limiter that overfills after idle time · date arithmetic ignoring leap
-years · binary search returning a non-leftmost match.
+years · binary search returning a non-leftmost match · recursive list flattening ·
+interval merging edge cases.
 
 **Implement-from-spec** (build a function to a ticket): `slugify` · recursive `deep_merge`
-for dicts · Luhn checksum validation · URL query-string parsing · email redaction.
+for dicts · Luhn checksum validation · URL query-string parsing · email redaction ·
+integer-to-Roman conversion · snake-case normalization.
 
 For each task: run it clean (is it solvable at all?), then — for clean-solved tasks —
 run the worst-case perturbation search. Each variant copies `workspace/` to a temp dir,
@@ -175,33 +177,12 @@ harnesses, SWE-bench included, must separate infra flakiness from genuine failur
 - **Toward real SWE-bench:** swap synthetic tasks for git-checkout repos + a test command;
   the runner/grader contract stays the same.
 
-## Related work
+## What this repo is
 
-This is a compact, from-scratch implementation of an **established and active research
-direction**, not a novel benchmark — robustness of code models to semantics-preserving
-changes has been studied directly:
-
-- **ReCode** (Wang et al., ACL 2023) — the closest predecessor: 30+ semantics-preserving
-  perturbations (docstrings, names, syntax, formatting) over HumanEval/MBPP, graded by
-  execution, with a **worst-case "Robust Pass@k"**. The prompt/repo atoms and the
-  worst-case framing here are a small, agentic subset of that idea.
-- **ReliabilityBench** (2026) — evaluates agents along the same three axes used here:
-  repeated-run consistency, **robustness to task perturbations**, and **fault tolerance
-  under infrastructure failures** (timeouts, rate limits) — the latter being exactly the
-  infra-error exclusion this harness implements.
-- **EvaLooop** (2025) — perturbation robustness of coding LLMs; reports the same
-  "which model is more robust depends on the perturbation" effect that motivates the
-  per-perturbation attribution and transfer table here.
-- **SWE-ABS / SWE-bench-A2A** (2026) — show that weak test suites overstate SWE-bench
-  scores and apply mutation / semantics-preserving perturbations and cross-provider
-  robustness checks; motivation for the functional FAIL_TO_PASS/PASS_TO_PASS grading.
-- **SWE-bench** (Jimenez et al., 2023) — the execution-based, container-isolated grading
-  contract this harness mirrors.
-
-The contribution of this repo is **pedagogical and infrastructural**: a small, readable,
-end-to-end agentic harness (tool-use loop + worst-case search + transfer analysis +
-infra-aware functional grading) you can run and extend in minutes — not a new dataset or
-a state-of-the-art claim.
+The contribution of this repo is **pedagogical and infrastructural**: a small,
+readable, end-to-end agentic harness (tool-use loop + worst-case search + transfer
+analysis + infra-aware functional grading) you can run and extend in minutes. It is
+not a leaderboard, a production benchmark, or a state-of-the-art claim.
 
 ## Honest limitations
 

@@ -4,7 +4,7 @@ This guide walks through kicking off a **fresh, full-suite run** against a real
 frontier model end to end. The example uses Anthropic's Haiku, but the same steps
 work for any `claude-*` or `gpt-*` model.
 
-A "full-suite" run evaluates the model on **all 12 tasks**, and for each task the
+A "full-suite" run evaluates the model on **all 16 tasks**, and for each task the
 harness searches semantics-preserving perturbations (the worst-case attack search)
 to measure robustness — not just whether the model can solve the clean task once.
 
@@ -68,7 +68,7 @@ python -m agenteval dashboard
    - **Search** → `greedy` (worst-case attack search).
    - **Grader** → `local` (or `docker` for isolated grading — see below).
    - **Budget / Stack / Steps** → leave at defaults (24 / 2 / 14).
-   - **Tasks** → leave **all 12** checked (this is the "full suite").
+   - **Tasks** → leave **all 16** checked (this is the "full suite").
 
 3. Click **Run experiment**. Watch the live log: each task runs `clean` first,
    then the attack search (`SURVIVED` / `BROKE` lines). When it finishes, the
@@ -86,7 +86,7 @@ python -m agenteval report
 ```
 
 Notes:
-- Omitting `--tasks` runs **all 12 tasks** (the full suite).
+- Omitting `--tasks` runs **all 16 tasks** (the full suite).
 - `python -u` streams progress live instead of buffering it.
 - Defaults: `--budget 24 --max-size 2 --max-steps 14 --grader local`.
 - To scope a quick test to a couple of tasks first:
@@ -142,6 +142,90 @@ everything as failed).
 - Cost scales with the number of model calls (tasks × perturbations × agent steps).
   Lower it for a cheaper smoke test with `--search none` (clean-only) or
   `--budget 6`.
+
+---
+
+## 6. Run the dashboard in Docker
+
+The dashboard core is pure standard library, so the container needs no build
+tooling (no Node/Vite). Build once, then serve:
+
+```bash
+docker compose up dashboard          # -> http://localhost:8765
+# or without compose:
+docker build -t agenteval .
+docker run --rm -p 8765:8765 agenteval
+```
+
+- To evaluate real models from the container, pass your key:
+  `docker run --rm -p 8765:8765 --env-file .env agenteval`.
+- Results persist to the host via the `./results` volume (see `docker-compose.yml`).
+- Inside the container the server binds `0.0.0.0` (via `--host`); locally it still
+  defaults to `127.0.0.1`.
+
+---
+
+## 7. UI test automation
+
+Two layers, both runnable locally or in Docker:
+- **API smoke tests** (`tests/test_api.py`) — pure stdlib; verify the JSON
+  contract and request validation.
+- **Playwright E2E** (`tests/test_e2e.py`) — drive real Chromium: page load,
+  Advanced toggle, task selection, the task inspector, and a full keyless
+  `reference` run that populates the scorecard.
+- **Math unit tests** (`tests/test_math.py`) — grader, perturbations, backends.
+
+Locally:
+
+```bash
+pip install -r requirements-dev.txt
+playwright install chromium          # one-time browser download
+python -m pytest tests -v
+```
+
+In Docker (uses the official Playwright image; targets the `dashboard` service):
+
+```bash
+docker compose --profile test run --rm tests
+```
+
+The tests find the dashboard via `AGENTEVAL_DASHBOARD_URL` if set, otherwise they
+start a throwaway server on a free port (writing to a temp results dir, so real
+`results/` is untouched).
+
+---
+
+## 8. Math word-problem robustness suite
+
+The same methodology applied to math: take a problem with a known answer, apply a
+**semantics-preserving** perturbation (the correct number never changes), and see
+whether the answer flips. Grading is numeric (final number vs. gold).
+
+```bash
+# keyless demo on the bundled sample (validates the plumbing):
+python -m agenteval math --model reference --dataset sample
+python -m agenteval math --model brittle-a --dataset sample
+python -m agenteval math --model brittle-b --dataset sample   # -> results/math_report.md
+
+# real public data ships in-repo (small verbatim slices), so this works offline:
+python -m agenteval math --model claude-haiku-4-5-20251001 --dataset gsm8k
+
+# for a full-scale run, fetch the complete datasets (the loader prefers them):
+python -m agenteval fetch-math --dataset gsm8k     # 1319-item test split -> data/math/ (gitignored)
+python -m agenteval math --model claude-haiku-4-5-20251001 --dataset gsm8k --limit 200
+```
+
+- Datasets: `sample` (original, bundled), plus **real public slices** of `gsm8k`
+  and `svamp` committed in-repo (first 25 problems each, MIT-licensed; see
+  `agenteval/data/SOURCES.md`). `fetch-math` downloads the full sets into
+  `data/math/`, which the loader prefers over the bundled slices. `gsm-plus` ships
+  pre-made variants — drop its normalized JSONL in `data/math/gsm-plus.jsonl` and
+  the suite uses those variants directly instead of synthesizing perturbations.
+- Perturbations: `paraphrase` (control), `verbose`, `distractor`, `noop`,
+  `name_swap`, `reformat`. Output reuses the same scorecard engine
+  (`results/math_report.md`), so clean/robust accuracy, per-perturbation
+  attribution, and cross-model transfer all work.
+- Runs checkpoint after every problem, so an interrupted run resumes on re-run.
 
 ---
 

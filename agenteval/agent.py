@@ -116,6 +116,37 @@ def _exec_tool(ws: Path, name: str, args: dict) -> str:
         return f"ERROR: {type(e).__name__}: {e}"
 
 
+MATH_SYSTEM = (
+    "You are a careful math tutor. Solve the word problem step by step, then state "
+    "the final answer on its own last line in the form 'Answer: <number>'. Use only "
+    "the information needed; ignore irrelevant details."
+)
+
+
+def answer_question(model: str, question: str, provider: str | None = None) -> str:
+    """Single-turn chain-of-thought answer to a math word problem.
+
+    Returns the model's raw text (the numeric grader extracts the final number).
+    Raises on infrastructure failures so the runner can classify/retry them the
+    same way it does for the coding agent.
+    """
+    provider = provider or ("anthropic" if model.startswith("claude") else "openai")
+    if provider == "anthropic":
+        import anthropic
+        client = anthropic.Anthropic(max_retries=SDK_MAX_RETRIES)
+        resp = client.messages.create(
+            model=model, max_tokens=1024, system=MATH_SYSTEM,
+            messages=[{"role": "user", "content": question}])
+        return "".join(b.text for b in resp.content if getattr(b, "type", "") == "text")
+    from openai import OpenAI
+    client = OpenAI(max_retries=SDK_MAX_RETRIES)
+    resp = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "system", "content": MATH_SYSTEM},
+                  {"role": "user", "content": question}])
+    return resp.choices[0].message.content or ""
+
+
 # ----- provider loops --------------------------------------------------------
 def run_llm_agent(model: str, prompt: str, ws: Path, max_steps: int = 14,
                   provider: str | None = None) -> dict:

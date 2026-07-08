@@ -1,0 +1,50 @@
+# agentic-coding-evals — containerized dashboard + UI tests.
+#
+#   docker compose up dashboard            # serve the dashboard at localhost:8765
+#   docker compose --profile test run --rm tests   # run API + Playwright UI tests
+#
+# The dashboard core is pure stdlib. To evaluate real models, drop an API key in
+# .env (ANTHROPIC_API_KEY=... / OPENAI_API_KEY=...); it is loaded at runtime only.
+
+services:
+  dashboard:
+    build: .
+    image: agenteval
+    ports:
+      - "8765:8765"
+    # Optional: pass ANTHROPIC_API_KEY / OPENAI_API_KEY for real-model runs.
+    env_file:
+      - path: .env
+        required: false
+    # Persist and inspect results on the host.
+    volumes:
+      - ./results:/app/results
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8765/api/meta', timeout=3).status==200 else 1)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 3s
+
+  # UI test runner: official Playwright image (browsers preinstalled), targets the
+  # running dashboard service over the compose network. Only runs under the `test`
+  # profile so `docker compose up` doesn't trigger it.
+  tests:
+    image: mcr.microsoft.com/playwright/python:v1.61.0-noble
+    depends_on:
+      dashboard:
+        condition: service_healthy
+    environment:
+      AGENTEVAL_DASHBOARD_URL: "http://dashboard:8765"
+      PYTHONPATH: /work
+    volumes:
+      - ./tests:/work/tests:ro
+      - ./requirements-dev.txt:/work/requirements-dev.txt:ro
+      # The math tests import the package directly (no server needed).
+      - ./agenteval:/work/agenteval:ro
+    working_dir: /work
+    # The Playwright image ships browsers at $PLAYWRIGHT_BROWSERS_PATH but not the
+    # pip package; install the matching playwright (+pytest) then run both suites.
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements-dev.txt >/dev/null && python -m pytest tests -v"
+    profiles: ["test"]

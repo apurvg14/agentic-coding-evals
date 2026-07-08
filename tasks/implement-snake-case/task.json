@@ -1,0 +1,7 @@
+{
+  "id": "implement-snake-case",
+  "title": "Implement camelCase/PascalCase to snake_case",
+  "prompt": "casing.py has a function to_snake_case(name) that currently raises NotImplementedError. Implement it so it converts a camelCase or PascalCase identifier into snake_case (all lowercase, words separated by single underscores). Word boundaries are: (1) between a lowercase letter or digit and a following uppercase letter, and (2) inside a run of uppercase letters, before the last uppercase that begins a new lowercase word (so an acronym stays together). Concretely: 'camelCase' -> 'camel_case', 'CamelCase' -> 'camel_case', 'HTTPServer' -> 'http_server', 'getHTTPResponseCode' -> 'get_http_response_code', 'userID' -> 'user_id', and a single all-lowercase word like 'name' stays 'name'.",
+  "prompt_vague": "Make to_snake_case in casing.py work.",
+  "prompt_paraphrase": "Implement to_snake_case(name) in casing.py (it raises NotImplementedError today) to turn a camelCase or PascalCase identifier into snake_case: lowercase everything and join words with single underscores. Insert a boundary between a lowercase letter or digit and a following uppercase letter, and split a block of consecutive capitals just before the final capital that starts a new lowercased word so acronyms are kept whole. Examples: 'camelCase' -> 'camel_case', 'CamelCase' -> 'camel_case', 'HTTPServer' -> 'http_server', 'getHTTPResponseCode' -> 'get_http_response_code', 'userID' -> 'user_id', and 'name' stays 'name'."
+}
